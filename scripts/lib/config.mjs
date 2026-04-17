@@ -57,3 +57,120 @@ export const OLLAMA_ENV = {
 };
 
 export const TIMEOUT_MS = 3600000; // 1 hour
+
+/**
+ * Role-based configuration for intent routing
+ * Maps roles to models and capabilities
+ */
+export const ROLES = {
+  investigator: {
+    description: 'Debugging and root cause analysis specialist',
+    preferredModel: 'glm-5.1',
+    traits: ['analytical', 'methodical', 'thorough'],
+    systemPrompt: 'You are a debugging expert. Focus on systematic root cause analysis.'
+  },
+  executor: {
+    description: 'Code implementation specialist',
+    preferredModel: 'glm-5.1',
+    traits: ['pragmatic', 'clean-code', 'efficient'],
+    systemPrompt: 'You are a skilled implementer. Write clean, well-tested code.'
+  },
+  reviewer: {
+    description: 'Code review and quality assurance specialist',
+    preferredModel: 'glm-5.1',
+    traits: ['critical', 'constructive', 'detail-oriented'],
+    systemPrompt: 'You are a thorough code reviewer. Find issues, suggest improvements.'
+  },
+  architect: {
+    description: 'System design and architecture specialist',
+    preferredModel: 'glm-5.1',
+    traits: ['strategic', 'scalable-thinking', 'trade-off-aware'],
+    systemPrompt: 'You are a systems architect. Consider trade-offs and long-term implications.'
+  },
+  educator: {
+    description: 'Explanation and teaching specialist',
+    preferredModel: 'kimi',
+    traits: ['clear', 'patient', 'example-driven'],
+    systemPrompt: 'You are an excellent teacher. Use analogies and clear explanations.'
+  },
+  refactorer: {
+    description: 'Code transformation and modernization specialist',
+    preferredModel: 'gemma4',
+    traits: ['precise', 'mechanical', 'preservative'],
+    systemPrompt: 'You are a refactoring expert. Preserve behavior while improving structure.'
+  },
+  documenter: {
+    description: 'Document processing and OCR specialist',
+    preferredModel: 'gemma4',
+    traits: ['accurate', 'structured', 'detail-focused'],
+    systemPrompt: 'You are a document processing expert. Extract and structure information accurately.'
+  },
+  designer: {
+    description: 'UI/UX and visual design specialist',
+    preferredModel: 'kimi',
+    traits: ['visual', 'creative', 'accessible'],
+    systemPrompt: 'You are a UI/UX designer. Focus on user experience and accessibility.'
+  },
+  tester: {
+    description: 'Testing and quality assurance specialist',
+    preferredModel: 'glm-5.1',
+    traits: ['thorough', 'edge-case-aware', 'systematic'],
+    systemPrompt: 'You are a testing expert. Cover edge cases and failure modes.'
+  },
+  generalist: {
+    description: 'General purpose assistant',
+    preferredModel: 'kimi',
+    traits: ['adaptable', 'balanced', 'helpful'],
+    systemPrompt: 'You are a helpful coding assistant.'
+  }
+};
+
+/**
+ * Intent pattern configuration
+ * Defines how to detect user intent from prompts
+ */
+export const INTENT_PATTERNS = {
+  confidenceThreshold: 0.3,
+  maxAlternatives: 2,
+  patternWeights: {
+    explicit: 1.0,      // User explicitly states intent
+    contextual: 0.7,    // Intent inferred from context
+    implicit: 0.4       // Weak signal, used for suggestions
+  }
+};
+
+export const CONFIDENCE_THRESHOLD = INTENT_PATTERNS.confidenceThreshold;
+
+/**
+ * Default configuration
+ */
+export const DEFAULT_CONFIG = {
+  default_model: 'kimi',
+  temperature: 0.7,
+  code_model: 'glm-5.1',
+  review_model: 'glm-5.1'
+};
+
+/**
+ * Load user configuration from ~/.ollama-cli/config.json
+ * Merges with defaults and returns the combined config
+ */
+export async function loadUserConfig() {
+  const { homedir } = await import('os');
+  const { join } = await import('path');
+  const { readFile } = await import('fs/promises');
+
+  const configPath = join(homedir(), '.ollama-cli', 'config.json');
+
+  try {
+    const content = await readFile(configPath, 'utf-8');
+    const userConfig = JSON.parse(content);
+    return { ...DEFAULT_CONFIG, ...userConfig };
+  } catch (err) {
+    // Config file doesn't exist or is invalid, return defaults
+    if (err.code !== 'ENOENT') {
+      console.warn(`[ollama] Warning: Could not load config from ${configPath}: ${err.message}`);
+    }
+    return { ...DEFAULT_CONFIG };
+  }
+}

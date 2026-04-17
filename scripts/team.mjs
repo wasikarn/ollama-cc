@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Team Mode (Phase 3)
- * Parallel workers with ensemble voting and task distribution
+ * Ollama CC - Team Mode (Phase 3 v0.2.0)
+ * Parallel workers with ensemble voting, task distribution, JSON output, and daemon support
  */
 
 import { spawn } from 'child_process';
@@ -9,7 +9,9 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
-import { escapeShellArg, resolveModelName } from './lib/utils.mjs';
+import { escapeShellArg, resolveModelName, withRetry } from './lib/utils.mjs';
+import { createJob, markJobCompleted, markJobFailed } from './lib/job-store.mjs';
+import { submitToDaemon } from './lib/daemon.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, blue: BLUE, cyan: CYAN, magenta: MAGENTA } = COLORS;
 
@@ -187,6 +189,41 @@ ${r.output.slice(0, 500)}${r.output.length > 500 ? `\n... (${r.output.length - 5
 }
 
 /**
+ * Generate JSON output for machine-readable results
+ */
+function generateJsonOutput(spec, results, ensemble, taskTemplate, options) {
+  const totalTime = results.reduce((sum, r) => sum + r.duration, 0);
+  const avgTime = results.length > 0 ? Math.round(totalTime / results.length) : 0;
+
+  return {
+    spec: {
+      count: spec.count,
+      modelKey: spec.modelKey,
+      modelName: spec.modelName
+    },
+    taskTemplate,
+    mode: options.ensemble ? 'ensemble' : 'distribute',
+    summary: {
+      workers: results.length,
+      totalTime,
+      averageTime: avgTime
+    },
+    ensemble: options.ensemble && ensemble ? {
+      agreement: ensemble.agreement,
+      themes: ensemble.themes,
+      workerCount: ensemble.workerCount
+    } : null,
+    results: results.map(r => ({
+      workerId: r.workerId,
+      duration: r.duration,
+      status: r.status,
+      output: r.output
+    })),
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
  * Main team mode function
  */
 export async function teamMode(countOrSpec, model, task, options = {}) {
@@ -205,7 +242,7 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
     taskTemplate = task;
   } else {
     console.error('Error: Invalid team specification');
-    console.error('Usage: team N:model "task-{i}" [--ensemble]');
+    console.error('Usage: team N:model "task-{i}" [--ensemble] [--format json] [--detach]');
     console.error('Examples:');
     console.error('  team 3:kimi "analyze file-{i}.ts"');
     console.error('  team 5:gemma "refactor module" --ensemble');
@@ -217,32 +254,72 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
     process.exit(1);
   }
 
-  console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
-  console.log(`${BLUE}  Team Mode - Phase 3${RESET}`);
-  console.log(`${BLUE}  ${spec.count}x ${spec.modelName}${RESET}`);
-  console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
+  const format = options.format || 'text';
+
+  // Handle detached mode
+  if (options.detach) {
+    const job = createJob('team', {
+      options: {
+        spec: countOrSpec,
+        model,
+        task,
+        ensemble: options.ensemble || false,
+        format
+      }
+    });
+    await submitToDaemon(job);
+    if (format !== 'json') {
+      console.log(`${YELLOW}Job ${job.id} submitted to daemon${RESET}`);
+      console.log(`Check status: ollama-cc status ${job.id}`);
+    } else {
+      console.log(JSON.stringify({ jobId: job.id, status: 'queued', detached: true }));
+    }
+    return { jobId: job.id, detached: true };
+  }
+
+  if (format !== 'json') {
+    console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
+    console.log(`${BLUE}  Team Mode - Phase 3${RESET}`);
+    console.log(`${BLUE}  ${spec.count}x ${spec.modelName}${RESET}`);
+    console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
+
+    const subtasks = options.ensemble
+      ? Array(spec.count).fill(null).map((_, i) => ({ id: i + 1, task: taskTemplate, status: 'pending' }))
+      : generateSubtasks(taskTemplate, spec.count);
+
+    if (options.ensemble) {
+      console.log(`${YELLOW}Ensemble Mode:${RESET} Running ${spec.count} workers with same task`);
+      console.log(`${YELLOW}Task:${RESET} ${taskTemplate}\n`);
+    } else {
+      console.log(`${YELLOW}Distribute Mode:${RESET} Running ${spec.count} subtasks`);
+      subtasks.slice(0, 5).forEach(s => console.log(`  ${CYAN}[${s.id}]${RESET} ${s.task.slice(0, 60)}...`));
+      if (subtasks.length > 5) {
+        console.log(`  ... and ${subtasks.length - 5} more`);
+      }
+      console.log();
+    }
+
+    console.log(`${YELLOW}Spawning workers...${RESET}\n`);
+  }
 
   const subtasks = options.ensemble
     ? Array(spec.count).fill(null).map((_, i) => ({ id: i + 1, task: taskTemplate, status: 'pending' }))
     : generateSubtasks(taskTemplate, spec.count);
 
-  if (options.ensemble) {
-    console.log(`${YELLOW}Ensemble Mode:${RESET} Running ${spec.count} workers with same task`);
-    console.log(`${YELLOW}Task:${RESET} ${taskTemplate}\n`);
-  } else {
-    console.log(`${YELLOW}Distribute Mode:${RESET} Running ${spec.count} subtasks`);
-    subtasks.slice(0, 5).forEach(s => console.log(`  ${CYAN}[${s.id}]${RESET} ${s.task.slice(0, 60)}...`));
-    if (subtasks.length > 5) {
-      console.log(`  ... and ${subtasks.length - 5} more`);
-    }
-    console.log();
-  }
-
-  console.log(`${YELLOW}Spawning workers...${RESET}\n`);
-
   const promises = subtasks.map((s) => {
     const color = MODEL_COLORS[spec.modelKey] || CYAN;
-    return runWorker(s.id, spec.modelName, s.task, color);
+    return withRetry(
+      () => runWorker(s.id, spec.modelName, s.task, color),
+      {
+        maxRetries: 2,
+        baseDelay: 1000,
+        onRetry: (err, attempt) => {
+          if (format !== 'json') {
+            console.log(`${YELLOW}[${s.id}] Retry ${attempt}/2${RESET}`);
+          }
+        }
+      }
+    );
   });
 
   const startTime = Date.now();
@@ -261,7 +338,9 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
       results.push(result.value);
     } else {
       failures.push({ workerId: index + 1, reason: result.reason.message });
-      console.error(`${MAGENTA}Worker ${index + 1} failed:${RESET} ${result.reason.message}`);
+      if (format !== 'json') {
+        console.error(`${MAGENTA}Worker ${index + 1} failed:${RESET} ${result.reason.message}`);
+      }
     }
   });
 
@@ -270,13 +349,22 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
     process.exit(1);
   }
 
-  console.log(`\n${YELLOW}Completed: ${results.length}/${settledResults.length} workers in ${totalTime}ms${RESET}\n`);
-
   let ensemble = null;
   if (options.ensemble && results.length > 0) {
-    console.log(`${BLUE}Analyzing ensemble consensus...${RESET}\n`);
     ensemble = ensembleVote(results);
+  }
 
+  // Output JSON if requested
+  if (format === 'json') {
+    const jsonOutput = generateJsonOutput(spec, results, ensemble, taskTemplate, options);
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return jsonOutput;
+  }
+
+  console.log(`\n${YELLOW}Completed: ${results.length}/${settledResults.length} workers in ${totalTime}ms${RESET}\n`);
+
+  if (options.ensemble && ensemble) {
+    console.log(`${BLUE}Analyzing ensemble consensus...${RESET}\n`);
     console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
     console.log(`${BLUE}  ENSEMBLE RESULTS${RESET}`);
     console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
@@ -308,6 +396,8 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
 
   const artifactPath = saveArtifact(spec, results, ensemble, { taskTemplate, ensemble: options.ensemble });
   console.log(`${YELLOW}💾 Saved to: ${artifactPath}${RESET}\n`);
+
+  return { results, ensemble };
 }
 
 // CLI entry point
@@ -315,10 +405,19 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
 
   const ensembleFlag = args.includes('--ensemble');
-  const filteredArgs = args.filter(a => a !== '--ensemble');
+  const detachFlag = args.includes('--detach');
+
+  const formatIndex = args.indexOf('--format');
+  const format = formatIndex >= 0 ? args[formatIndex + 1] : 'text';
+
+  const filteredArgs = args.filter((a, i) => {
+    if (a === '--ensemble' || a === '--detach') return false;
+    if (i === formatIndex || i === formatIndex + 1) return false;
+    return true;
+  });
 
   const teamSpec = filteredArgs[0];
   const task = filteredArgs.slice(1).join(' ');
 
-  teamMode(teamSpec, null, task, { ensemble: ensembleFlag });
+  teamMode(teamSpec, null, task, { ensemble: ensembleFlag, format, detach: detachFlag });
 }

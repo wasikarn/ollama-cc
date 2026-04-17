@@ -1,7 +1,7 @@
 {
 	"name": "ollama-cc",
-	"description": "Intelligent Ollama cloud model orchestration for Claude Code. Features Smart Router (auto-detect best model), Debate Mode (multi-model consensus), and Team Mode (parallel workers with ensemble voting).",
-	"version": "0.0.1",
+	"description": "Ollama cloud models with intelligent routing, job lifecycle management, and background execution.",
+	"version": "0.1.0",
 	"license": "MIT",
 	"keywords": [
 		"ollama",

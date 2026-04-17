@@ -1,12 +1,15 @@
 # Ollama CC
 
-Intelligent Ollama cloud model orchestration for Claude Code.
+Ollama cloud models with intelligent routing, job lifecycle management, and background execution.
 
 ## Features
 
-- **Smart Router (Phase 1)**: Auto-detect best model from prompt keywords
-- **Debate Mode (Phase 2)**: Multi-model consensus with quality tiers
+- **Smart Router (Phase 1)**: Intent-based model detection with keyword fallback
+- **Debate Mode (Phase 2)**: Multi-model consensus with quality tiers and JSON output
 - **Team Mode (Phase 3)**: Parallel workers with ensemble voting
+- **Job Management (v0.1.0)**: Persistent job store with status tracking
+- **Background Execution (v0.2.0)**: Daemon-based detached execution
+- **Structured Output (v0.2.0)**: JSON schema output for machine parsing
 
 ## Prerequisites
 
@@ -39,12 +42,15 @@ git clone https://github.com/wasikarn/ollama-cc ~/.claude/plugins/ollama-cc
 
 ### Smart Router
 
-Auto-route prompts to the best model based on keywords:
+Auto-route prompts to the best model using intent classification:
 
 ```bash
-# Auto-route to best model
+# Auto-route based on intent
 /ollama:smart "debug why this async fails"
 /ollama:smart --explain "refactor this code"
+
+# Show intent classification
+/ollama:smart --show-intent "design a caching layer"
 
 # Direct model access
 /ollama:smart --model kimi "analyze this screenshot"
@@ -52,18 +58,22 @@ Auto-route prompts to the best model based on keywords:
 /ollama:smart --model gemma "extract text from PDF"
 ```
 
-**Routing Logic:**
-| Keywords | Routes To |
-|----------|-----------|
-| debug, error, fix | glm-5.1 |
-| design, architecture | glm-5.1 |
-| refactor, transform | gemma4 |
-| ui, visual, screenshot | kimi |
-| ocr, document, extract | gemma4 |
+**Intent Routing:**
+| Intent | Patterns | Routes To | Role |
+|--------|----------|-----------|------|
+| DEBUG | debug, error, fix, crash, exception | glm-5.1 | investigator |
+| IMPLEMENT | code, implement, write function | glm-5.1 | executor |
+| REVIEW | review, analyze, check, audit | glm-5.1 | reviewer |
+| DESIGN | design, architecture, pattern | glm-5.1 | architect |
+| EXPLAIN | explain, how does, what is | kimi | educator |
+| REFACTOR | refactor, transform, migrate | gemma4 | refactorer |
+| DOCUMENT | ocr, document, parse, extract | gemma4 | documenter |
+| VISUAL | ui, visual, screenshot, mockup | kimi | designer |
+| TEST | test, spec, unit test, coverage | glm-5.1 | tester |
 
 ### Debate Mode
 
-Run 3 models in parallel and synthesize consensus:
+Run 3 models in parallel with structured output:
 
 ```bash
 # Multi-model consensus (default: standard tier)
@@ -72,8 +82,14 @@ Run 3 models in parallel and synthesize consensus:
 # Fast tier (consensus ≥90% only)
 /ollama:debate --tier fast "Is this function pure?"
 
-# Deep tier (full analysis + trade-offs)
+# Deep tier with full analysis
 /ollama:debate --tier deep "Architecture decision with risks"
+
+# JSON output for automation
+/ollama:debate --format json "Security review this code"
+
+# Run in background
+/ollama:debate --detach --tier deep "Complex analysis"
 ```
 
 ### Team Mode
@@ -89,12 +105,47 @@ Execute tasks in parallel with multiple workers:
 
 # Process many files
 /ollama:team 10:glm "extract functions from file-{0}.js"
+
+# JSON output
+/ollama:team 3:kimi "analyze file-{i}.ts" --format json
+
+# Background execution
+/ollama:team 10:glm "refactor module-{i}" --detach
 ```
 
 **Task Templates:**
 - `{i}` = 1-indexed (1, 2, 3...)
 - `{0}` = 0-indexed (0, 1, 2...)
 - `{n}` = total count
+
+### Status Command
+
+Check jobs and daemon status:
+
+```bash
+# Show all jobs and daemon status
+/ollama:status
+
+# Filter by status
+/ollama:status --running
+/ollama:status --completed
+/ollama:status --failed
+/ollama:status --pending
+
+# Show detailed job info
+/ollama:status <job-id>
+
+# Daemon control
+/ollama:status --start
+/ollama:status --stop
+/ollama:status --daemon
+
+# Statistics
+/ollama:status --stats
+
+# Cleanup old jobs (7 days)
+/ollama:status --cleanup
+```
 
 ## Model Specifications
 
@@ -135,11 +186,12 @@ ollama signin
 - Check internet connection
 - Verify `ollama signin` completed successfully
 - Try with explicit model: `/ollama:smart --model kimi "prompt"`
+- Check job status: `/ollama:status --failed`
 
 ### Slow responses
 - Use `kimi-k2.5:cloud` (FREE tier, often fastest)
-- For bulk tasks, use Team Mode with multiple workers
-- Check Ollama status: `ollama status`
+- For bulk tasks, use Team Mode with `--detach` for background execution
+- Check daemon status: `/ollama:status --daemon`
 
 ### Commands not appearing
 ```bash
@@ -150,6 +202,18 @@ ollama signin
 /plugin list
 ```
 
+### Background jobs not completing
+```bash
+# Check daemon is running
+/ollama:status --daemon
+
+# Start daemon if needed
+/ollama:status --start
+
+# Check failed jobs
+/ollama:status --failed
+```
+
 ## CLI Usage (Standalone)
 
 Use without Claude Code:
@@ -157,13 +221,33 @@ Use without Claude Code:
 ```bash
 # Direct execution
 ./ollama-wrapper.sh smart "debug this error"
+./ollama-wrapper.sh smart --show-intent "design this"
 ./ollama-wrapper.sh debate "architecture decision"
+./ollama-wrapper.sh debate --format json "security review"
 ./ollama-wrapper.sh team 3:kimi "analyze file-{i}.ts"
+./ollama-wrapper.sh team 10:glm "refactor" --detach
+
+# Job management
+./ollama-wrapper.sh status
+./ollama-wrapper.sh status --running
+./ollama-wrapper.sh status --start
+./ollama-wrapper.sh status --stop
 ```
 
 ## Architecture
 
 See [docs/PROPOSAL-v2.md](docs/PROPOSAL-v2.md) for full design.
+
+## Changelog
+
+### v0.1.0
+- Intent-based routing with role classification
+- Job lifecycle management with JSON persistence
+- Structured JSON output (`--format json`)
+- Background execution with daemon (`--detach`)
+- Status command for job monitoring
+- Retry logic with exponential backoff
+- XML prompt block system
 
 ## License
 

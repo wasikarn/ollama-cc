@@ -1,12 +1,15 @@
 {
   "name": "ollama-cc",
-  "version": "0.0.1",
-  "description": "Ollama cloud models with intelligent routing - Smart Router, Debate Mode, and Team execution",
+  "version": "0.1.0",
+  "description": "Ollama cloud models with intelligent routing, job management, and background execution",
   "main": "scripts/index.mjs",
   "type": "module",
   "bin": {
     "ollama-cc": "./scripts/index.mjs",
-    "ollama-smart": "./scripts/smart.mjs"
+    "ollama-smart": "./scripts/smart.mjs",
+    "ollama-debate": "./scripts/debate.mjs",
+    "ollama-team": "./scripts/team.mjs",
+    "ollama-status": "./scripts/status.mjs"
   },
   "scripts": {
     "test": "node --test",

@@ -1,19 +1,35 @@
 #!/usr/bin/env node
 /**
- * Ollama CLI Plugin - Smart Router (Phase 1)
- * Auto-detect best model based on prompt keywords
+ * Ollama CLI Plugin - Smart Router (Phase 3 - v0.3.0)
+ * Intent-based model routing with XML prompt blocks
  */
 
 import { spawn } from 'child_process';
-import { MODELS, KEYWORD_MAP, OLLAMA_ENV } from './lib/config.mjs';
-import { log, escapeShellArg } from './lib/utils.mjs';
+import { MODELS, KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
+import { detectModelFromIntent, classifyIntent, getPromptTemplate } from './lib/intent-router.mjs';
+import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
+import { log, escapeShellArg, withRetry, resolveModelName } from './lib/utils.mjs';
 
 /**
- * Detect best model from prompt keywords
+ * Detect best model using intent-based classification
+ * Falls back to keyword matching for backward compatibility
  */
 export function detectModel(prompt) {
-  const lowerPrompt = prompt.toLowerCase();
+  // Try intent-based detection first
+  const intentResult = detectModelFromIntent(prompt);
+  if (intentResult.confidence >= 0.3) {
+    return {
+      model: intentResult.model,
+      category: intentResult.category,
+      reason: intentResult.reason,
+      intent: intentResult.intent,
+      confidence: intentResult.confidence,
+      role: intentResult.role
+    };
+  }
 
+  // Fallback to keyword matching
+  const lowerPrompt = prompt.toLowerCase();
   for (const mapping of KEYWORD_MAP) {
     for (const pattern of mapping.patterns) {
       const regex = new RegExp(pattern.replace(/\./g, '\\.'), 'i');
@@ -21,7 +37,9 @@ export function detectModel(prompt) {
         return {
           model: MODELS[mapping.model].name,
           category: mapping.category,
-          reason: MODELS[mapping.model].reason
+          reason: MODELS[mapping.model].reason,
+          intent: 'KEYWORD_MATCH',
+          confidence: 0.5
         };
       }
     }
@@ -31,17 +49,65 @@ export function detectModel(prompt) {
   return {
     model: MODELS.kimi.name,
     category: 'General',
-    reason: 'Balanced, FREE, 256K context'
+    reason: 'Balanced, FREE, 256K context',
+    intent: 'DEFAULT',
+    confidence: 0.3
   };
+}
+
+/**
+ * Format intent classification for display
+ */
+function formatIntentClassification(classification) {
+  const { intent, confidence, role, recommendedModel, description, alternatives } = classification;
+
+  let output = '';
+  output += `${COLORS.cyan}Intent:${COLORS.reset} ${intent}\n`;
+  output += `${COLORS.cyan}Confidence:${COLORS.reset} ${(confidence * 100).toFixed(1)}%\n`;
+  output += `${COLORS.cyan}Role:${COLORS.reset} ${role}\n`;
+  output += `${COLORS.cyan}Description:${COLORS.reset} ${description}\n`;
+  output += `${COLORS.cyan}Recommended Model:${COLORS.reset} ${recommendedModel}\n`;
+
+  if (alternatives && alternatives.length > 0) {
+    output += `${COLORS.cyan}Alternatives:${COLORS.reset}\n`;
+    for (const alt of alternatives) {
+      output += `  - ${alt.intent} (${(alt.confidence * 100).toFixed(1)}%)\n`;
+    }
+  }
+
+  return output;
 }
 
 /**
  * Run ollama with given model and prompt
  */
-function runOllama(model, prompt) {
+function runOllama(model, prompt, options = {}) {
   return new Promise((resolve, reject) => {
-    const escapedPrompt = escapeShellArg(prompt);
-    const child = spawn('ollama', ['run', model, escapedPrompt, '--nowordwrap'], {
+    const useStructured = options.structured !== false;
+
+    // Build structured prompt if enabled
+    let finalPrompt = prompt;
+    if (useStructured && options.classification) {
+      try {
+        finalPrompt = createIntentPrompt(prompt, {
+          classification: options.classification,
+          includeIntent: true
+        });
+      } catch (err) {
+        log('warn', `Failed to build structured prompt: ${err.message}`);
+        // Fall back to minimal
+        finalPrompt = createMinimalPrompt(prompt, model);
+      }
+    }
+
+    const escapedPrompt = escapeShellArg(finalPrompt);
+    const args = ['run', model, escapedPrompt];
+
+    if (options.nowordwrap !== false) {
+      args.push('--nowordwrap');
+    }
+
+    const child = spawn('ollama', args, {
       stdio: ['inherit', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -74,29 +140,66 @@ function runOllama(model, prompt) {
 }
 
 /**
+ * Run ollama with retry logic
+ */
+async function runOllamaWithRetry(model, prompt, options = {}) {
+  return withRetry(
+    () => runOllama(model, prompt, options),
+    {
+      maxRetries: 3,
+      baseDelay: 1000,
+      onRetry: (err, attempt) => {
+        log('warn', `Retry ${attempt}/3 after error: ${err.message}`);
+      }
+    }
+  );
+}
+
+/**
  * Main smart router function
  */
 export async function smartRouter(prompt, options = {}) {
   if (!prompt) {
-    log('error', 'No prompt provided. Usage: smart "<prompt>" [--explain]');
+    log('error', 'No prompt provided. Usage: smart "<prompt>" [--explain] [--show-intent]');
     process.exit(1);
   }
 
-  const detection = detectModel(prompt);
+  // Get intent-based classification
+  const classification = classifyIntent(prompt);
+  const detection = detectModelFromIntent(prompt, { verbose: options.verbose });
 
-  if (options.explain) {
-    log('info', 'Smart Router Analysis:');
-    console.log(`  Prompt: ${prompt.slice(0, 60)}...`);
-    console.log(`  Category: ${detection.category}`);
-    console.log(`  Routed to: ${detection.model}`);
-    console.log(`  Reason: ${detection.reason}`);
+  // Show intent classification if requested
+  if (options.showIntent) {
+    log('info', 'Intent Classification:');
+    console.log(formatIntentClassification(classification));
     console.log('');
   }
 
-  log('model', `Smart route → ${detection.model}`);
+  // Show explanation if requested
+  if (options.explain) {
+    log('info', 'Smart Router Analysis:');
+    console.log(`  Prompt: ${prompt.slice(0, 60)}...`);
+    console.log(`  Intent: ${detection.intent}`);
+    console.log(`  Confidence: ${(detection.confidence * 100).toFixed(1)}%`);
+    console.log(`  Role: ${detection.role} (${detection.roleDescription})`);
+    console.log(`  Category: ${detection.category}`);
+    console.log(`  Routed to: ${detection.model}`);
+    console.log(`  Reason: ${detection.reason}`);
+    console.log(`  Expertise: ${detection.expertise}`);
+    if (detection.alternatives && detection.alternatives.length > 0) {
+      console.log(`  Alternatives: ${detection.alternatives.map(a => a.intent).join(', ')}`);
+    }
+    console.log('');
+  }
+
+  log('model', `Smart route (${detection.intent.toLowerCase()}, ${(detection.confidence * 100).toFixed(0)}%) → ${detection.model}`);
 
   try {
-    await runOllama(detection.model, prompt);
+    await runOllamaWithRetry(detection.model, prompt, {
+      structured: options.structured,
+      classification: detection,
+      nowordwrap: options.nowordwrap
+    });
   } catch (error) {
     log('error', error.message);
     process.exit(1);
@@ -106,9 +209,37 @@ export async function smartRouter(prompt, options = {}) {
 // CLI entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
+
+  // Parse flags
   const explainFlag = args.includes('--explain');
+  const showIntentFlag = args.includes('--show-intent');
+  const verboseFlag = args.includes('--verbose');
+  const noStructuredFlag = args.includes('--no-structured');
+
+  // Parse --model flag
+  const modelFlagIndex = args.findIndex(a => a === '--model');
+  let modelOverride = null;
+  if (modelFlagIndex >= 0 && modelFlagIndex + 1 < args.length) {
+    modelOverride = resolveModelName(args[modelFlagIndex + 1]);
+    args.splice(modelFlagIndex, 2);
+  }
+
+  // Find prompt (first positional arg, not a flag)
   const promptIndex = args.findIndex(a => !a.startsWith('--'));
   const prompt = promptIndex >= 0 ? args[promptIndex] : null;
 
-  smartRouter(prompt, { explain: explainFlag });
+  if (modelOverride) {
+    log('model', `Model override: ${modelOverride}`);
+    runOllamaWithRetry(modelOverride, prompt, { structured: !noStructuredFlag }).catch(err => {
+      log('error', err.message);
+      process.exit(1);
+    });
+  } else {
+    smartRouter(prompt, {
+      explain: explainFlag,
+      showIntent: showIntentFlag,
+      verbose: verboseFlag,
+      structured: !noStructuredFlag
+    });
+  }
 }

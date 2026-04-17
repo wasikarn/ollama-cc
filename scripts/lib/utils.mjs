@@ -77,3 +77,37 @@ export function parseArgs(argv) {
 
   return { args, flags, positionals };
 }
+
+/**
+ * Retry wrapper with exponential backoff
+ * @param {Function} fn - Async function to retry
+ * @param {Object} options - Retry options
+ * @param {number} options.maxRetries - Maximum number of retries (default: 3)
+ * @param {number} options.baseDelay - Base delay in ms (default: 1000)
+ * @param {Function} options.onRetry - Callback on retry (error, attempt) => void
+ * @returns {Promise} - Result of fn
+ */
+export async function withRetry(fn, options = {}) {
+  const { maxRetries = 3, baseDelay = 1000, onRetry } = options;
+  let lastError;
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === maxRetries) {
+        throw error;
+      }
+
+      const delay = baseDelay * Math.pow(2, attempt);
+      if (onRetry) {
+        onRetry(error, attempt + 1);
+      }
+      await new Promise(resolve => setTimeout(resolve, delay));
+    }
+  }
+
+  throw lastError;
+}

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Debate Mode (Phase 2)
- * Multi-model consensus with quality tiers
+ * Ollama CC - Debate Mode (Phase 2 v0.2.0)
+ * Multi-model consensus with quality tiers, JSON output, and daemon support
  */
 
 import { spawn } from 'child_process';
@@ -9,7 +9,9 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
-import { escapeShellArg } from './lib/utils.mjs';
+import { escapeShellArg, withRetry } from './lib/utils.mjs';
+import { createJob, markJobCompleted, markJobFailed } from './lib/job-store.mjs';
+import { submitToDaemon } from './lib/daemon.mjs';
 
 const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
 
@@ -213,31 +215,92 @@ ${results.map(r => `### ${r.modelName}\n\n${r.output}`).join('\n\n---\n\n')}
 }
 
 /**
+ * Generate JSON output for machine-readable results
+ */
+function generateJsonOutput(prompt, results, consensus, tier) {
+  const modelResults = results.map(r => ({
+    model: r.model,
+    modelName: r.modelName,
+    expertise: r.expertise,
+    duration: r.duration,
+    output: r.output
+  }));
+
+  const agreements = {};
+  for (const [pair, score] of Object.entries(consensus.agreements)) {
+    agreements[pair] = parseFloat(score.toFixed(2));
+  }
+
+  return {
+    verdict: consensus.consensusLevel,
+    confidence: parseFloat((consensus.averageAgreement / 100).toFixed(2)),
+    models: modelResults,
+    agreements,
+    consensusLevel: consensus.consensusLevel,
+    tier,
+    prompt,
+    timestamp: new Date().toISOString()
+  };
+}
+
+/**
  * Main debate mode function
  */
 export async function debateMode(prompt, options = {}) {
   if (!prompt) {
-    console.error('Error: No prompt provided. Usage: debate "<prompt>" [--tier fast|standard|deep]');
+    console.error('Error: No prompt provided. Usage: debate "<prompt>" [--tier fast|standard|deep] [--format json] [--detach]');
     process.exit(1);
   }
 
   const tier = options.tier || 'standard';
+  const format = options.format || 'text';
 
-  console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
-  console.log(`${BLUE}  Debate Mode - Phase 2${RESET}`);
-  console.log(`${BLUE}  Quality Tier: ${tier.toUpperCase()}${RESET}`);
-  console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
+  // Handle detached mode
+  if (options.detach) {
+    const job = createJob('debate', {
+      prompt,
+      options: { tier, format }
+    });
+    await submitToDaemon(job);
+    console.log(`${YELLOW}Job ${job.id} submitted to daemon${RESET}`);
+    console.log(`Check status: ollama-cc status ${job.id}`);
+    return { jobId: job.id, detached: true };
+  }
 
-  console.log(`${YELLOW}Running 3 models in parallel...${RESET}\n`);
+  if (format !== 'json') {
+    console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
+    console.log(`${BLUE}  Debate Mode - Phase 2${RESET}`);
+    console.log(`${BLUE}  Quality Tier: ${tier.toUpperCase()}${RESET}`);
+    console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
+
+    console.log(`${YELLOW}Running 3 models in parallel...${RESET}\n`);
+  }
 
   const startTime = Date.now();
   const promises = Object.entries(MODELS).map(([key, config]) => {
-    process.stdout.write(`${config.color}  ▶ ${config.name}${RESET} `);
-    return runModel(key, config, prompt).then(result => {
-      process.stdout.write(`${config.color}✓${RESET} (${result.duration}ms)\n`);
+    if (format !== 'json') {
+      process.stdout.write(`${config.color}  ▶ ${config.name}${RESET} `);
+    }
+    return withRetry(
+      () => runModel(key, config, prompt),
+      {
+        maxRetries: 2,
+        baseDelay: 1000,
+        onRetry: (err, attempt) => {
+          if (format !== 'json') {
+            process.stdout.write(`${YELLOW}↻${RESET} `);
+          }
+        }
+      }
+    ).then(result => {
+      if (format !== 'json') {
+        process.stdout.write(`${config.color}✓${RESET} (${result.duration}ms)\n`);
+      }
       return result;
     }).catch(err => {
-      process.stdout.write(`${config.color}✗${RESET} ERROR\n`);
+      if (format !== 'json') {
+        process.stdout.write(`${config.color}✗${RESET} ERROR\n`);
+      }
       throw err;
     });
   });
@@ -251,10 +314,20 @@ export async function debateMode(prompt, options = {}) {
   }
 
   const totalTime = Date.now() - startTime;
-  console.log(`\n${YELLOW}All models completed in ${totalTime}ms${RESET}\n`);
 
-  console.log(`${BLUE}Analyzing consensus...${RESET}\n`);
+  if (format !== 'json') {
+    console.log(`\n${YELLOW}All models completed in ${totalTime}ms${RESET}\n`);
+    console.log(`${BLUE}Analyzing consensus...${RESET}\n`);
+  }
+
   const consensus = analyzeConsensus(results);
+
+  // Output JSON if requested
+  if (format === 'json') {
+    const jsonOutput = generateJsonOutput(prompt, results, consensus, tier);
+    console.log(JSON.stringify(jsonOutput, null, 2));
+    return jsonOutput;
+  }
 
   const synthesis = generateSynthesis(results, consensus, tier);
 
@@ -281,18 +354,34 @@ export async function debateMode(prompt, options = {}) {
       console.log(`\n`);
     }
   }
+
+  return { consensus, results, synthesis };
 }
 
 // CLI entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
   const args = process.argv.slice(2);
+
+  // Parse flags
   const tierIndex = args.indexOf('--tier');
   const tier = tierIndex >= 0 ? args[tierIndex + 1] : 'standard';
 
-  const filteredArgs = args.filter((_, i) => i !== tierIndex && i !== tierIndex + 1);
+  const formatIndex = args.indexOf('--format');
+  const format = formatIndex >= 0 ? args[formatIndex + 1] : 'text';
+
+  const detach = args.includes('--detach');
+
+  // Filter out flags and their values from args
+  const filteredArgs = args.filter((_, i) => {
+    if (i === tierIndex || i === tierIndex + 1) return false;
+    if (i === formatIndex || i === formatIndex + 1) return false;
+    if (args[i] === '--detach') return false;
+    return true;
+  });
+
   const prompt = filteredArgs.join(' ');
 
-  debateMode(prompt, { tier }).catch(err => {
+  debateMode(prompt, { tier, format, detach }).catch(err => {
     console.error('Error:', err.message);
     process.exit(1);
   });
