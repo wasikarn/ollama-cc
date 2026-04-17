@@ -9,21 +9,24 @@ export const MODELS = {
     context: '200K',
     bestFor: ['debugging', 'coding', 'architecture', 'agentic'],
     reason: 'SWE-Bench Pro SOTA, 8-hour agent support',
-    color: '\x1b[36m' // Cyan
+    color: '\x1b[36m', // Cyan
+    expertise: 'Systems architecture, agentic debugging'
   },
   'kimi': {
     name: 'kimi-k2.5:cloud',
     context: '256K',
     bestFor: ['multimodal', 'ui', 'visual', 'reasoning'],
     reason: 'Cross-modal, UI→code, FREE',
-    color: '\x1b[32m' // Green
+    color: '\x1b[32m', // Green
+    expertise: 'Multimodal reasoning, UI-to-code generation'
   },
   'gemma4': {
     name: 'gemma4:31b-cloud',
     context: '256K',
     bestFor: ['ocr', 'document', 'refactor', 'transform'],
     reason: 'Native OCR, Apache 2.0, function calling',
-    color: '\x1b[35m' // Magenta
+    color: '\x1b[35m', // Magenta
+    expertise: 'Document OCR, code refactoring'
   }
 };
 
