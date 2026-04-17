@@ -2,15 +2,15 @@
   "name": "ollama-cc",
   "version": "0.0.1",
   "description": "Ollama cloud models with intelligent routing - Smart Router, Debate Mode, and Team execution",
-  "main": "commands/index.mjs",
+  "main": "scripts/index.mjs",
   "type": "module",
   "bin": {
-    "ollama-cc": "./commands/index.mjs",
-    "ollama-smart": "./commands/smart.mjs"
+    "ollama-cc": "./scripts/index.mjs",
+    "ollama-smart": "./scripts/smart.mjs"
   },
   "scripts": {
     "test": "node --test",
-    "lint": "eslint commands/*.mjs scripts/*.mjs"
+    "lint": "eslint scripts/*.mjs"
   },
   "keywords": [
     "ollama",
@@ -31,11 +31,6 @@
   "devDependencies": {},
   "claude": {
     "skills": ["ollama-cc"],
-    "agents": ["ollama-debate", "ollama-team"],
-    "commands": {
-      "smart": "commands/smart.mjs",
-      "debate": "commands/debate.mjs",
-      "team": "commands/team.mjs"
-    }
+    "agents": ["ollama-debate", "ollama-team"]
   }
 }

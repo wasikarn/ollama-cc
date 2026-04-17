@@ -2,41 +2,16 @@
 /**
  * Ollama CC - Debate Mode (Phase 2)
  * Multi-model consensus with quality tiers
- *
- * Flow:
- * 1. Run 3 models in parallel with same prompt
- * 2. Collect outputs
- * 3. Compare for agreements/disagreements
- * 4. Synthesize verdict based on quality tier
  */
 
 import { spawn } from 'child_process';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
+import { escapeShellArg } from './lib/utils.mjs';
 
-// Model specifications with expertise areas
-const MODELS = {
-  'glm-5.1': {
-    name: 'glm-5.1:cloud',
-    expertise: 'Coding, Architecture, Agentic Tasks',
-    color: '\x1b[36m' // Cyan
-  },
-  'kimi': {
-    name: 'kimi-k2.5:cloud',
-    expertise: 'Reasoning, Multimodal, Debugging',
-    color: '\x1b[32m' // Green
-  },
-  'gemma4': {
-    name: 'gemma4:31b-cloud',
-    expertise: 'Refactoring, OCR, Document Parsing',
-    color: '\x1b[35m' // Magenta
-  }
-};
-
-const RESET = '\x1b[0m';
-const YELLOW = '\x1b[33m';
-const BLUE = '\x1b[34m';
+const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
 
 /**
  * Run a single model and capture output
@@ -44,12 +19,12 @@ const BLUE = '\x1b[34m';
 function runModel(modelKey, modelConfig, prompt) {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
-    const child = spawn('ollama', ['run', modelConfig.name, prompt, '--nowordwrap'], {
+    const escapedPrompt = escapeShellArg(prompt);
+    const child = spawn('ollama', ['run', modelConfig.name, escapedPrompt, '--nowordwrap'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        OLLAMA_KEEP_ALIVE: '1h',
-        OLLAMA_NUM_PARALLEL: '4'
+        ...OLLAMA_ENV
       }
     });
 
@@ -87,7 +62,6 @@ function runModel(modelKey, modelConfig, prompt) {
 
 /**
  * Calculate simple agreement score between two outputs
- * (Basic implementation - checks for shared key phrases)
  */
 function calculateAgreement(output1, output2) {
   const words1 = new Set(output1.toLowerCase().split(/\s+/).filter(w => w.length > 4));
@@ -166,7 +140,6 @@ function generateSynthesis(results, consensus, tier) {
     default:
       synthesis = `Deep Analysis (${averageAgreement.toFixed(1)}% agreement):\n\n`;
 
-      // Extract key points from each model
       synthesis += '## Key Perspectives\n\n';
       for (const r of results) {
         const keyPoints = r.output
@@ -257,7 +230,6 @@ export async function debateMode(prompt, options = {}) {
 
   console.log(`${YELLOW}Running 3 models in parallel...${RESET}\n`);
 
-  // Run all models in parallel
   const startTime = Date.now();
   const promises = Object.entries(MODELS).map(([key, config]) => {
     process.stdout.write(`${config.color}  ▶ ${config.name}${RESET} `);
@@ -281,14 +253,11 @@ export async function debateMode(prompt, options = {}) {
   const totalTime = Date.now() - startTime;
   console.log(`\n${YELLOW}All models completed in ${totalTime}ms${RESET}\n`);
 
-  // Analyze consensus
   console.log(`${BLUE}Analyzing consensus...${RESET}\n`);
   const consensus = analyzeConsensus(results);
 
-  // Generate synthesis
   const synthesis = generateSynthesis(results, consensus, tier);
 
-  // Display results
   console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
   console.log(`${BLUE}  RESULTS${RESET}`);
   console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
@@ -296,11 +265,9 @@ export async function debateMode(prompt, options = {}) {
   console.log(synthesis);
   console.log();
 
-  // Save artifact
   const artifactPath = saveArtifact(prompt, results, consensus, synthesis, tier);
   console.log(`${YELLOW}💾 Saved to: ${artifactPath}${RESET}\n`);
 
-  // Individual outputs (for STANDARD and DEEP tiers)
   if (tier !== 'fast') {
     console.log(`${BLUE}Individual Model Outputs:${RESET}\n`);
     for (const r of results) {
@@ -322,7 +289,6 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const tierIndex = args.indexOf('--tier');
   const tier = tierIndex >= 0 ? args[tierIndex + 1] : 'standard';
 
-  // Remove --tier and its value from args
   const filteredArgs = args.filter((_, i) => i !== tierIndex && i !== tierIndex + 1);
   const prompt = filteredArgs.join(' ');
 

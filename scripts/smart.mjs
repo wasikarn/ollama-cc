@@ -5,63 +5,8 @@
  */
 
 import { spawn } from 'child_process';
-import { readFileSync } from 'fs';
-import { homedir } from 'os';
-import { join } from 'path';
-
-// Model specifications
-const MODELS = {
-  'glm-5.1': {
-    name: 'glm-5.1:cloud',
-    context: '200K',
-    bestFor: ['debugging', 'coding', 'architecture', 'agentic'],
-    reason: 'SWE-Bench Pro SOTA, 8-hour agent support'
-  },
-  'kimi': {
-    name: 'kimi-k2.5:cloud',
-    context: '256K',
-    bestFor: ['multimodal', 'ui', 'visual', 'reasoning'],
-    reason: 'Cross-modal, UI→code, FREE'
-  },
-  'gemma4': {
-    name: 'gemma4:31b-cloud',
-    context: '256K',
-    bestFor: ['ocr', 'document', 'refactor', 'transform'],
-    reason: 'Native OCR, Apache 2.0, function calling'
-  }
-};
-
-// Keyword mapping for routing
-const KEYWORD_MAP = [
-  { patterns: ['debug', 'error', 'fix', 'why', 'investigate', 'trace', 'bug'], model: 'glm-5.1', category: 'Debugging' },
-  { patterns: ['design', 'architecture', 'plan', 'system', 'structure'], model: 'glm-5.1', category: 'Architecture' },
-  { patterns: ['code', 'implement', 'write.*function', 'create.*class', 'programming'], model: 'glm-5.1', category: 'Coding' },
-  { patterns: ['ocr', 'document', 'parse', 'extract.*text', 'pdf', 'scan', 'image.*text'], model: 'gemma4', category: 'Document/OCR' },
-  { patterns: ['refactor', 'transform', 'rename', 'migrate', 'mechanical'], model: 'gemma4', category: 'Refactoring' },
-  { patterns: ['ui', 'visual', 'screenshot', 'image', 'multimodal', 'from.*design'], model: 'kimi', category: 'Visual/Multimodal' },
-  { patterns: ['review', 'analyze', 'check', 'audit'], model: 'glm-5.1', category: 'Analysis' }
-];
-
-// Colors for terminal output
-const colors = {
-  green: '\x1b[32m',
-  yellow: '\x1b[33m',
-  blue: '\x1b[34m',
-  cyan: '\x1b[36m',
-  red: '\x1b[31m',
-  reset: '\x1b[0m'
-};
-
-function log(type, message) {
-  const prefix = {
-    info: `${colors.green}[ollama]${colors.reset}`,
-    warn: `${colors.yellow}[ollama]${colors.reset}`,
-    error: `${colors.red}[ollama]${colors.reset}`,
-    model: `${colors.blue}[ollama]${colors.reset}`,
-    perf: `${colors.cyan}[ollama]${colors.reset}`
-  }[type] || '[ollama]';
-  console.log(`${prefix} ${message}`);
-}
+import { MODELS, KEYWORD_MAP, OLLAMA_ENV } from './lib/config.mjs';
+import { log, escapeShellArg } from './lib/utils.mjs';
 
 /**
  * Detect best model from prompt keywords
@@ -95,13 +40,12 @@ export function detectModel(prompt) {
  */
 function runOllama(model, prompt) {
   return new Promise((resolve, reject) => {
-    const child = spawn('ollama', ['run', model, prompt, '--nowordwrap'], {
+    const escapedPrompt = escapeShellArg(prompt);
+    const child = spawn('ollama', ['run', model, escapedPrompt, '--nowordwrap'], {
       stdio: ['inherit', 'pipe', 'pipe'],
       env: {
         ...process.env,
-        OLLAMA_KEEP_ALIVE: process.env.OLLAMA_KEEP_ALIVE || '1h',
-        OLLAMA_NUM_PARALLEL: process.env.OLLAMA_NUM_PARALLEL || '4',
-        OLLAMA_FLASH_ATTENTION: process.env.OLLAMA_FLASH_ATTENTION || '1'
+        ...OLLAMA_ENV
       }
     });
 
@@ -121,6 +65,10 @@ function runOllama(model, prompt) {
       } else {
         reject(new Error(`Process exited with code ${code}`));
       }
+    });
+
+    child.on('error', (err) => {
+      reject(new Error(`Failed to spawn ollama: ${err.message}`));
     });
   });
 }

@@ -7,9 +7,28 @@
 import { smartRouter } from './smart.mjs';
 import { debateMode } from './debate.mjs';
 import { teamMode } from './team.mjs';
+import { parseArgs } from './lib/utils.mjs';
+import { readFileSync } from 'fs';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
+// Get version from package.json
+function getVersion() {
+  try {
+    const pkgPath = join(__dirname, '..', 'package.json');
+    const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
+    return pkg.version || '0.0.1';
+  } catch {
+    return '0.0.1';
+  }
+}
+
+const VERSION = getVersion();
 
 const USAGE = `
-Ollama CC v2.0.0
+Ollama CC v${VERSION}
 
 Commands:
   smart [--explain] "<prompt>"     Auto-route to best model (Phase 1)
@@ -19,46 +38,42 @@ Commands:
   help                            Show this help
 
 Examples:
-  ./commands/index.mjs smart "debug this error"
-  ./commands/index.mjs smart --explain "refactor this code"
-  ./commands/index.mjs debate "Should we use microservices?"
-  ./commands/index.mjs debate --tier fast "Quick check"
-  ./commands/index.mjs team 3:kimi "analyze file-{i}.ts"
+  ollama-cc smart "debug this error"
+  ollama-cc smart --explain "refactor this code"
+  ollama-cc debate "Should we use microservices?"
+  ollama-cc debate --tier fast "Quick check"
+  ollama-cc team 3:kimi "analyze file-{i}.ts"
 `;
 
 async function main() {
-  const args = process.argv.slice(2);
-  const command = args[0];
+  const { flags, positionals } = parseArgs(process.argv);
+  const command = positionals[0];
 
   switch (command) {
     case 'smart': {
-      const explainFlag = args.includes('--explain');
-      const promptIndex = args.findIndex((a, i) => i > 0 && !a.startsWith('--'));
-      const prompt = promptIndex >= 0 ? args[promptIndex] : null;
+      const explainFlag = flags.explain === true;
+      const prompt = positionals.slice(1).join(' ');
       await smartRouter(prompt, { explain: explainFlag });
       break;
     }
 
     case 'debate': {
-      const tierIndex = args.indexOf('--tier');
-      const tier = tierIndex >= 0 ? args[tierIndex + 1] : 'standard';
-      const filteredArgs = args.filter((_, i) => i !== 0 && i !== tierIndex && i !== tierIndex + 1);
-      const prompt = filteredArgs.join(' ');
+      const tier = flags.tier || 'standard';
+      const prompt = positionals.slice(1).join(' ');
       await debateMode(prompt, { tier });
       break;
     }
 
     case 'team': {
-      const ensembleFlag = args.includes('--ensemble');
-      const filteredArgs = args.filter(a => a !== '--ensemble');
-      const teamSpec = filteredArgs[1];
-      const task = filteredArgs.slice(2).join(' ');
+      const ensembleFlag = flags.ensemble === true;
+      const teamSpec = positionals[1];
+      const task = positionals.slice(2).join(' ');
       await teamMode(teamSpec, null, task, { ensemble: ensembleFlag });
       break;
     }
 
     case 'status':
-      console.log('Ollama CC v2.0.0');
+      console.log(`Ollama CC v${VERSION}`);
       console.log('Phase 1 (Smart Router): ✓ Active');
       console.log('Phase 2 (Debate Mode): ✓ Active');
       console.log('Phase 3 (Team Mode): ✓ Active');

@@ -39,34 +39,34 @@ check_status() {
     fi
     echo ""
     echo "Commands available:"
-    ls -la "$SCRIPT_DIR/commands/"*.mjs 2>/dev/null || echo "  (none found)"
+    ls -la "$SCRIPT_DIR/scripts/"*.mjs 2>/dev/null || echo "  (none found)"
 }
 
 # Main command routing
 case "${1:-}" in
     smart)
         shift
-        node "$SCRIPT_DIR/commands/smart.mjs" "$@"
+        node "$SCRIPT_DIR/scripts/smart.mjs" "$@"
         ;;
     debate)
         shift
-        node "$SCRIPT_DIR/commands/debate.mjs" "$@"
+        node "$SCRIPT_DIR/scripts/debate.mjs" "$@"
         ;;
     team)
         shift
-        node "$SCRIPT_DIR/commands/team.mjs" "$@"
+        node "$SCRIPT_DIR/scripts/team.mjs" "$@"
         ;;
     kimi)
         shift
-        node "$SCRIPT_DIR/commands/smart.mjs" --model kimi "$@"
+        node "$SCRIPT_DIR/scripts/smart.mjs" --model kimi "$@"
         ;;
     glm)
         shift
-        node "$SCRIPT_DIR/commands/smart.mjs" --model glm "$@"
+        node "$SCRIPT_DIR/scripts/smart.mjs" --model glm "$@"
         ;;
     gemma)
         shift
-        node "$SCRIPT_DIR/commands/smart.mjs" --model gemma "$@"
+        node "$SCRIPT_DIR/scripts/smart.mjs" --model gemma "$@"
         ;;
     status)
         check_status
