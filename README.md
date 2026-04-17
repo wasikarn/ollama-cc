@@ -214,6 +214,79 @@ ollama signin
 /ollama:status --failed
 ```
 
+## Workflow Examples
+
+### Complete Background Analysis Workflow
+
+```bash
+# 1. Start daemon
+/ollama:status --start
+
+# 2. Submit long-running analysis to background
+/ollama:debate --detach --tier deep "Review microservices architecture"
+# Output: Job submitted: abc123-def456
+
+# 3. Continue working...
+
+# 4. Check status later
+/ollama:status --running
+/ollama:status abc123-def456
+
+# 5. Stop daemon when done
+/ollama:status --stop
+```
+
+### Batch Refactoring with Team Mode
+
+```bash
+# Refactor 20 files in background
+/ollama:team 20:gemma "refactor src/components/File-{i}.ts to use hooks" --detach
+
+# Check progress
+/ollama:status --stats
+# Output: Running: 15/20 | Completed: 3 | Failed: 2
+
+# View failed jobs
+/ollama:status --failed
+
+# Re-run failed ones
+/ollama:status <failed-job-id>  # Get original prompt
+/ollama:team 2:gemma "<original prompt>" --detach
+```
+
+### CI/CD Integration with JSON Output
+
+```bash
+# Security review in CI pipeline
+./ollama-wrapper.sh debate --format json --tier fast "Security review this PR" > review.json
+
+# Parse result
+VERDICT=$(jq -r '.verdict' review.json)
+CONFIDENCE=$(jq -r '.confidence' review.json)
+
+if [ "$VERDICT" = "low" ] && [ $(echo "$CONFIDENCE < 0.5" | bc) -eq 1 ]; then
+  echo "High uncertainty - require manual review"
+  exit 1
+fi
+```
+
+### Complex Multi-Step Analysis
+
+```bash
+# Step 1: Get consensus on approach
+/ollama:debate --tier deep "Should we use CQRS for this service?"
+# Result: Proceed with cautious implementation
+
+# Step 2: Design with multiple perspectives
+/ollama:team 3:glm "Design {i} alternative architectures" --ensemble
+
+# Step 3: Implement chosen approach
+/ollama:smart --model glm-5.1 "Implement the CQRS pattern with event sourcing"
+
+# Step 4: Generate tests
+/ollama:smart --show-intent "Write comprehensive tests for CQRS implementation"
+```
+
 ## CLI Usage (Standalone)
 
 Use without Claude Code:
