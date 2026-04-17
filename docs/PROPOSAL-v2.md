@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-ปรับปรุง Ollama wrapper ให้เป็น **intelligent orchestrator** ที่ delegate งานให้ model ที่เหมาะสมที่สุด รองรับทั้ง direct Ollama และ Claude+Ollama backend modes
+Evolve the Ollama wrapper into an **intelligent orchestrator** that delegates tasks to the most appropriate model. Supports both direct Ollama and Claude+Ollama backend modes.
 
 ---
 
@@ -14,37 +14,37 @@ User Command
 [Command Parser]
       ↓
 ├─→ Mode A: Direct Ollama (ollama run <model>)
-│       └─→ เร็ว, ถูก, ใช้กับงาน routine
+│       └─→ Fast, cheap, for routine tasks
 │
 └─→ Mode B: Claude + Ollama backend (ollama launch claude --model <model>)
-        └─→ ได้ Claude interface, tools, MCP แต่ backend เป็น Ollama models
+        └─→ Get Claude interface, tools, MCP with Ollama models as backend
 ```
 
-### เมื่อไหร่ใช้ Mode ไหน:
+### When to use each Mode:
 
-| Scenario | Mode | เหตุผล |
+| Scenario | Mode | Reason |
 |----------|------|--------|
 | Quick code generation | A | Fast, cheap |
-| Need Claude artifacts | B | ได้ UI-rich output |
-| Complex debugging | B | Claude มี tools ช่วย |
-| Bulk processing | A | Parallel ได้เร็วกว่า |
+| Need Claude artifacts | B | Get UI-rich output |
+| Complex debugging | B | Claude has tools to help |
+| Bulk processing | A | Parallel execution is faster |
 
 ---
 
 ## Feature 1: Smart Router (Auto-Detect)
 
-**Concept จาก OMC:** `ask-kimi`, `ask-glm`, `ask-gemma` แยกตาม expertise
+**Concept from OMC:** `ask-kimi`, `ask-glm`, `ask-gemma` separated by expertise
 
-**การทำงาน:**
+**How it works:**
 ```bash
 ./ollama-wrapper.sh smart "debug why this async fails"
-# → วิเคราะห์คำสั่ง → detect "debug" → route ไป kimi
+# → Analyze command → detect "debug" → route to kimi
 
 ./ollama-wrapper.sh smart "design microservices architecture"
-# → detect "design" + "architecture" → route ไป glm
+# → detect "design" + "architecture" → route to glm
 
 ./ollama-wrapper.sh smart "refactor this to use repository pattern"
-# → detect "refactor" → route ไป gemma
+# → detect "refactor" → route to gemma
 ```
 
 **Model Specifications:**
@@ -57,7 +57,7 @@ User Command
 
 **Keyword Mapping:**
 
-| Keywords | Route To | เหตุผล |
+| Keywords | Route To | Reason |
 |----------|----------|--------|
 | debug, error, fix, why, investigate | **glm-5.1** | Agentic + tool use, SWE-bench Pro SOTA |
 | design, architecture, plan, system | **glm-5.1** | 744B MoE, 8-hour agent support |
@@ -86,24 +86,24 @@ smart_detect() {
 
 ## Feature 2: Debate Mode (Multi-Model Consensus)
 
-**Concept จาก OMC:** `ai-delegate`, `ccg-full` — debate แล้ว adjudicator ตัดสิน
+**Concept from OMC:** `ai-delegate`, `ccg-full` — debate then adjudicator decides
 
-**การทำงาน:**
+**How it works:**
 ```bash
 ./ollama-wrapper.sh debate "Should we use event sourcing or audit log?"
 ```
 
 **Flow:**
 ```
-1. Run 3 models กับ prompt เดียวกัน (parallel)
+1. Run 3 models with same prompt (parallel)
    ├─→ kimi: "From debugging perspective..."
    ├─→ glm: "From systems architecture..."
    └─→ gemma: "From implementation/refactor..."
 
-2. เปรียบเทียบ outputs
-   ├─→ หา agreement points (ทุกคนตรงกัน = high confidence)
-   ├─→ หา disagreements (บอกว่าใครเห็นอย่างไร)
-   └─→ สรุป trade-offs
+2. Compare outputs
+   ├─→ Find agreement points (all agree = high confidence)
+   ├─→ Find disagreements (show who thinks what)
+   └─→ Summarize trade-offs
 
 3. Synthesize verdict
    ├─→ Final recommendation
@@ -144,34 +144,34 @@ smart_detect() {
 - [ ] Add migration path documentation
 ```
 
-**Quality Tiers (จาก ai-delegate):**
+**Quality Tiers (from ai-delegate):**
 
 | Consensus | Tier | Output |
 |-----------|------|--------|
-| ≥90% | FAST | สรุป agreement อย่างเดียว |
-| 70-90% | STANDARD | แสดง disagreements |
+| ≥90% | FAST | Summary of agreements only |
+| 70-90% | STANDARD | Show disagreements |
 | <70% | DEEP | Deep analysis + judge evaluation |
 
 ---
 
 ## Feature 3: Team Mode (Parallel Workers)
 
-**Concept จาก OMC:** `omc-teams-ollama` — N workers parallel
+**Concept from OMC:** `omc-teams-ollama` — N workers parallel
 
-**การทำงาน:**
+**How it works:**
 ```bash
-# รัน 3 workers กับ subtask ต่างกัน
+# Run 3 workers with different subtasks
 ./ollama-wrapper.sh team 3:kimi "Analyze file-{1..3}.ts"
 
-# รัน 5 workers กับ task เดียวกัน (ensemble voting)
+# Run 5 workers with same task (ensemble voting)
 ./ollama-wrapper.sh team 5:gemma "Refactor this function" --same-task
 ```
 
 **Use Cases:**
 
-1. **Distribute Work:** 3 ไฟล์ → 3 workers → 3x faster
-2. **Ensemble:** 5 workers ตอบคำถามเดียวกัน → เอา majority vote
-3. **Multi-Perspective:** kimi + glm + gemma พร้อมกัน → รวมผล
+1. **Distribute Work:** 3 files → 3 workers → 3x faster
+2. **Ensemble:** 5 workers answer same question → take majority vote
+3. **Multi-Perspective:** kimi + glm + gemma together → combine results
 
 **Implementation:**
 ```bash
@@ -200,7 +200,7 @@ team_mode() {
 
 ## Feature 4: Artifact Persistence
 
-**Concept จาก OMC:** ทุก skill บันทึก output → `.omc/artifacts/`
+**Concept from OMC:** Every skill saves output → `.omc/artifacts/`
 
 **Structure:**
 ```
@@ -218,9 +218,9 @@ team_mode() {
 ```
 
 **Benefits:**
-- Audit trail: "เมื่อวาน Claude แนะนำอะไรไว้?"
-- Resume: หยุดตรงไหน กลับมาทำต่อได้
-- Compare: ผลลัพธ์จาก model ไหนดีกว่า
+- Audit trail: "What did Claude recommend yesterday?"
+- Resume: Stop anywhere, continue later
+- Compare: Which model gave better results?
 
 **Auto-save:**
 ```bash
@@ -245,10 +245,10 @@ team_mode() {
 
 # Smart Router (Auto-detect)
 ./ollama-wrapper.sh smart "prompt"                  # Auto-route based on keywords
-./ollama-wrapper.sh smart --explain "prompt"        # บอกว่า why route ไป model นี้
+./ollama-wrapper.sh smart --explain "prompt"        # Show why routed to this model
 
 # Debate Mode
-./ollama-wrapper.sh debate "prompt"                 # Run ทั้ง 3 models
+./ollama-wrapper.sh debate "prompt"                 # Run all 3 models
 ./ollama-wrapper.sh debate --tier fast "prompt"     # Consensus ≥90% only
 ./ollama-wrapper.sh debate --tier deep "prompt"     # Full analysis + judge
 
@@ -297,11 +297,11 @@ team_mode() {
 
 **Current → New (Backward Compatible):**
 ```bash
-# Current (ยังใช้ได้)
+# Current (still works)
 ./ollama-wrapper.sh kimi "prompt"
 ./ollama-wrapper.sh run "prompt"
 
-# New (เพิ่มเข้ามา)
+# New (added)
 ./ollama-wrapper.sh smart "prompt"       # Auto-route
 ./ollama-wrapper.sh debate "prompt"      # Multi-model
 ./ollama-wrapper.sh team 3:kimi "task"   # Parallel
@@ -314,18 +314,18 @@ team_mode() {
 | Task | Before | After |
 |------|--------|-------|
 | Debug error | `./ollama-wrapper.sh kimi "debug..."` | `./ollama-wrapper.sh smart "debug..."` (auto) |
-| Architecture decision | รัน model เดียว, ได้ perspective เดียว | `./ollama-wrapper.sh debate "..."` (3 perspectives) |
-| Refactor 10 files | รัน 10 ครั้ง serial | `./ollama-wrapper.sh team 5:gemma "file-{i}"` (parallel) |
-| Review PR | ลืมไปแล้วว่า model ไหนแนะนำอะไร | `./ollama-wrapper.sh --artifact debate "..."` (saved) |
+| Architecture decision | Run single model, get single perspective | `./ollama-wrapper.sh debate "..."` (3 perspectives) |
+| Refactor 10 files | Run 10 times serially | `./ollama-wrapper.sh team 5:gemma "file-{i}"` (parallel) |
+| Review PR | Forgot which model recommended what | `./ollama-wrapper.sh --artifact debate "..."` (saved) |
 
 ---
 
 ## Questions for Review
 
-1. **Priority:** เอา Phase ไหนก่อน? (แนะนำ Phase 1 → 2 → 3 → 4)
-2. **Mode B:** ต้องการ `claude` mode ด้วยหรือ focus ที่ direct Ollama?
-3. **Quality Tiers:** ต้องการ auto-detect consensus หรือ user เลือก tier เอง?
-4. **Artifacts:** เก็บทุก command หรือเฉพาะ `--artifact` flag?
+1. **Priority:** Which Phase first? (Recommended: Phase 1 → 2 → 3 → 4)
+2. **Mode B:** Need `claude` mode or focus on direct Ollama?
+3. **Quality Tiers:** Auto-detect consensus or user selects tier?
+4. **Artifacts:** Store every command or only `--artifact` flag?
 
 ---
 

@@ -2,14 +2,14 @@
 
 ## Purpose
 
-Plugin นี้จัดการ Ollama cloud models ด้วย intelligent routing และ job lifecycle management
+Plugin for managing Ollama cloud models with intelligent routing and job lifecycle management
 
 ## Commands
 
-- `/ollama:smart` — Auto-route ตาม intent classification
-- `/ollama:debate` — Multi-model consensus  พร้อม JSON output
-- `/ollama:team` — Parallel execution แบบ distribute หรือ ensemble
-- `/ollama:status` — Job management และ daemon control
+- `/ollama:smart` — Auto-route based on intent classification
+- `/ollama:debate` — Multi-model consensus with JSON output
+- `/ollama:team` — Parallel execution with distribute or ensemble modes
+- `/ollama:status` — Job management and daemon control
 
 ## Smart Router (Intent-Based)
 
@@ -26,10 +26,10 @@ Plugin นี้จัดการ Ollama cloud models ด้วย intelligent 
 | TEST | test, unit test, coverage | glm-5.1 | tester |
 
 ### Flags
-- `--show-intent` — แสดง intent classification
-- `--explain` — แสดงเหตุผลการเลือก model
+- `--show-intent` — Display intent classification
+- `--explain` — Show model selection reasoning
 - `--model <name>` — Override model (kimi, glm-5.1, gemma4)
-- `--no-structured` — ปิด XML prompt blocks
+- `--no-structured` — Disable XML prompt blocks
 
 ## Debate Mode
 
@@ -46,28 +46,28 @@ Plugin นี้จัดการ Ollama cloud models ด้วย intelligent 
 ```bash
 /ollama:team 3:kimi "analyze file-{i}.ts"           # Distribute
 /ollama:team 5:gemma "Review PR" --ensemble         # Ensemble voting
-/ollama:team 10:glm "refactor" --detach           # Background
+/ollama:team 10:glm "refactor" --detach            # Background
 /ollama:team 3:kimi "task" --format json           # JSON output
 ```
 
 ## Job Management
 
 ```bash
-/ollama:status                              # ดูทุก job
-/ollama:status --running                    # กำลังทำงาน
-/ollama:status --completed                  # เสร็จแล้ว
-/ollama:status --failed                     # ล้มเหลว
-/ollama:status <job-id>                     # ดูรายละเอียด
-/ollama:status --stats                      # สถิติรวม
-/ollama:status --cleanup                    # ลบงานเก่า
+/ollama:status                              # View all jobs
+/ollama:status --running                    # Running jobs
+/ollama:status --completed                  # Completed jobs
+/ollama:status --failed                     # Failed jobs
+/ollama:status <job-id>                     # View details
+/ollama:status --stats                      # Summary statistics
+/ollama:status --cleanup                    # Remove old jobs
 ```
 
 ## Daemon Control
 
 ```bash
-/ollama:status --start                      # เปิด daemon
-/ollama:status --stop                       # ปิด daemon
-/ollama:status --daemon                     # เช็คสถานะ
+/ollama:status --start                      # Start daemon
+/ollama:status --stop                       # Stop daemon
+/ollama:status --daemon                     # Check status
 ```
 
 ## Setup
