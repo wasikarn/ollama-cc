@@ -1,0 +1,41 @@
+{
+  "name": "ollama-cc",
+  "version": "2.0.0",
+  "description": "Ollama cloud models with intelligent routing - Smart Router, Debate Mode, and Team execution",
+  "main": "commands/index.mjs",
+  "type": "module",
+  "bin": {
+    "ollama-cc": "./commands/index.mjs",
+    "ollama-smart": "./commands/smart.mjs"
+  },
+  "scripts": {
+    "test": "node --test",
+    "lint": "eslint commands/*.mjs scripts/*.mjs"
+  },
+  "keywords": [
+    "ollama",
+    "llm",
+    "ai",
+    "claude-code",
+    "plugin",
+    "kimi",
+    "glm",
+    "gemma"
+  ],
+  "author": "KoBig",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "claude": {
+    "skills": ["ollama-cc"],
+    "agents": ["ollama-debate", "ollama-team"],
+    "commands": {
+      "smart": "commands/smart.mjs",
+      "debate": "commands/debate.mjs",
+      "team": "commands/team.mjs"
+    }
+  }
+}

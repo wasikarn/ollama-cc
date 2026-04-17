@@ -1,0 +1,36 @@
+{
+  "name": "ollama-cc",
+  "metadata": {
+    "description": "Intelligent Ollama cloud model orchestration for Claude Code. Features Smart Router (auto-detect best model), Debate Mode (multi-model consensus), and Team Mode (parallel workers with ensemble voting)."
+  },
+  "owner": {
+    "name": "kobig"
+  },
+  "plugins": [
+    {
+      "name": "ollama-cc",
+      "source": "./",
+      "description": "Intelligent Ollama cloud model orchestration for Claude Code. Features Smart Router (auto-detect best model), Debate Mode (multi-model consensus), and Team Mode (parallel workers with ensemble voting).",
+      "version": "2.0.0",
+      "author": {
+        "name": "kobig"
+      },
+      "keywords": [
+        "ollama",
+        "llm",
+        "ai",
+        "kimi",
+        "glm",
+        "gemma",
+        "multi-model",
+        "parallel",
+        "consensus",
+        "orchestration"
+      ],
+      "category": "ai",
+      "homepage": "https://github.com/wasikarn/ollama-cc#readme",
+      "repository": "https://github.com/wasikarn/ollama-cc",
+      "license": "MIT"
+    }
+  ]
+}
