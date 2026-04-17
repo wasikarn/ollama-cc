@@ -1,1 +1,9 @@
 .omc
+node_modules/
+*.log
+.DS_Store
+.env
+.env.local
+dist/
+build/
+coverage/

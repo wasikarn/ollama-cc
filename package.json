@@ -1,6 +1,6 @@
 {
   "name": "ollama-cc",
-  "version": "2.0.0",
+  "version": "0.0.1",
   "description": "Ollama cloud models with intelligent routing - Smart Router, Debate Mode, and Team execution",
   "main": "commands/index.mjs",
   "type": "module",

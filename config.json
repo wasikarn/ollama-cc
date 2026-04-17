@@ -1,6 +1,6 @@
 {
   "default_model": "kimi-k2.5:cloud",
   "temperature": "0.1",
-  "code_model": "glm-5:cloud",
+  "code_model": "glm-5.1:cloud",
   "review_model": "gemma4:31b-cloud"
 }
