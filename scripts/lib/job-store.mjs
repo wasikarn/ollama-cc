@@ -116,8 +116,8 @@ export function listJobs(status = null) {
     }
   }
 
-  // Sort by createdAt descending (newest first)
-  return jobs.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  // Sort by createdAt descending — ISO 8601 is lexicographically sortable, no Date construction needed
+  return jobs.sort((a, b) => (b.createdAt > a.createdAt ? 1 : -1));
 }
 
 /**

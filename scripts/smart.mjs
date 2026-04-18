@@ -5,7 +5,7 @@
  */
 
 import { spawn } from 'child_process';
-import { MODELS, KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
+import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
 import { detectModelFromIntent, getPromptTemplate } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
 import { log, withRetry, resolveModelName } from './lib/utils.mjs';
@@ -28,11 +28,10 @@ export function detectModel(prompt) {
     };
   }
 
-  // Fallback to keyword matching
+  // Fallback to keyword matching (pre-compiled regexes)
   const lowerPrompt = prompt.toLowerCase();
-  for (const mapping of KEYWORD_MAP) {
-    for (const pattern of mapping.patterns) {
-      const regex = new RegExp(pattern.replace(/\./g, '\\.'), 'i');
+  for (const mapping of COMPILED_KEYWORD_MAP) {
+    for (const regex of mapping.compiledPatterns) {
       if (regex.test(lowerPrompt)) {
         return {
           model: MODELS[mapping.model].name,

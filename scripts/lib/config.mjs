@@ -54,6 +54,11 @@ export const KEYWORD_MAP = [
   { patterns: ['review', 'analyze', 'check', 'audit'], model: 'glm-5.1', category: 'Analysis' }
 ];
 
+export const COMPILED_KEYWORD_MAP = KEYWORD_MAP.map(mapping => ({
+  ...mapping,
+  compiledPatterns: mapping.patterns.map(p => new RegExp(p.replace(/\./g, '\\.'), 'i'))
+}));
+
 export const OLLAMA_ENV = {
   OLLAMA_KEEP_ALIVE: process.env.OLLAMA_KEEP_ALIVE || '1h',
   OLLAMA_NUM_PARALLEL: process.env.OLLAMA_NUM_PARALLEL || '4',

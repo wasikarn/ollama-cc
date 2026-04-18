@@ -78,6 +78,8 @@ function calculateAgreement(output1, output2) {
  * Analyze agreements and disagreements between all models
  */
 function analyzeConsensus(results) {
+  const resultMap = new Map(results.map(r => [r.model, r]));
+
   const pairs = [];
   for (let i = 0; i < results.length; i++) {
     for (let j = i + 1; j < results.length; j++) {
@@ -90,8 +92,8 @@ function analyzeConsensus(results) {
   let pairCount = 0;
 
   for (const [m1, m2] of pairs) {
-    const r1 = results.find(r => r.model === m1);
-    const r2 = results.find(r => r.model === m2);
+    const r1 = resultMap.get(m1);
+    const r2 = resultMap.get(m2);
     if (r1 && r2) {
       const score = calculateAgreement(r1.output, r2.output);
       agreements[`${m1}-${m2}`] = score;
