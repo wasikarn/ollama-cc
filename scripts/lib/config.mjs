@@ -3,6 +3,10 @@
  * Shared configuration for Ollama CC commands
  */
 
+import { homedir } from 'os';
+import { join } from 'path';
+import { readFile } from 'fs/promises';
+
 export const MODELS = {
   'glm-5.1': {
     name: 'glm-5.1:cloud',
@@ -156,10 +160,6 @@ export const DEFAULT_CONFIG = {
  * Merges with defaults and returns the combined config
  */
 export async function loadUserConfig() {
-  const { homedir } = await import('os');
-  const { join } = await import('path');
-  const { readFile } = await import('fs/promises');
-
   const configPath = join(homedir(), '.ollama-cli', 'config.json');
 
   try {

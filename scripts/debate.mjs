@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
-import { escapeShellArg, withRetry } from './lib/utils.mjs';
+import { withRetry } from './lib/utils.mjs';
 import { createJob, markJobCompleted, markJobFailed } from './lib/job-store.mjs';
 import { submitToDaemon } from './lib/daemon.mjs';
 
@@ -21,8 +21,7 @@ const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
 function runModel(modelKey, modelConfig, prompt) {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
-    const escapedPrompt = escapeShellArg(prompt);
-    const child = spawn('ollama', ['run', modelConfig.name, escapedPrompt, '--nowordwrap'], {
+    const child = spawn('ollama', ['run', modelConfig.name, prompt, '--nowordwrap'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -79,14 +78,16 @@ function calculateAgreement(output1, output2) {
  * Analyze agreements and disagreements between all models
  */
 function analyzeConsensus(results) {
-  const pairs = [
-    ['glm-5.1', 'kimi'],
-    ['glm-5.1', 'gemma4'],
-    ['kimi', 'gemma4']
-  ];
+  const pairs = [];
+  for (let i = 0; i < results.length; i++) {
+    for (let j = i + 1; j < results.length; j++) {
+      pairs.push([results[i].model, results[j].model]);
+    }
+  }
 
   const agreements = {};
   let totalAgreement = 0;
+  let pairCount = 0;
 
   for (const [m1, m2] of pairs) {
     const r1 = results.find(r => r.model === m1);
@@ -95,10 +96,11 @@ function analyzeConsensus(results) {
       const score = calculateAgreement(r1.output, r2.output);
       agreements[`${m1}-${m2}`] = score;
       totalAgreement += score;
+      pairCount++;
     }
   }
 
-  const averageAgreement = totalAgreement / pairs.length;
+  const averageAgreement = pairCount > 0 ? totalAgreement / pairCount : 0;
 
   return {
     agreements,

@@ -9,7 +9,7 @@ import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
-import { escapeShellArg, resolveModelName, withRetry } from './lib/utils.mjs';
+import { resolveModelName, withRetry } from './lib/utils.mjs';
 import { createJob, markJobCompleted, markJobFailed } from './lib/job-store.mjs';
 import { submitToDaemon } from './lib/daemon.mjs';
 
@@ -67,11 +67,10 @@ function generateSubtasks(template, count) {
 function runWorker(workerId, modelName, prompt, color) {
   return new Promise((resolve, reject) => {
     const startTime = Date.now();
-    const escapedPrompt = escapeShellArg(prompt);
 
     process.stdout.write(`${color}[${workerId}]${RESET} `);
 
-    const child = spawn('ollama', ['run', modelName, escapedPrompt, '--nowordwrap'], {
+    const child = spawn('ollama', ['run', modelName, prompt, '--nowordwrap'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: {
         ...process.env,
@@ -277,15 +276,15 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
     return { jobId: job.id, detached: true };
   }
 
+  const subtasks = options.ensemble
+    ? Array(spec.count).fill(null).map((_, i) => ({ id: i + 1, task: taskTemplate, status: 'pending' }))
+    : generateSubtasks(taskTemplate, spec.count);
+
   if (format !== 'json') {
     console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
     console.log(`${BLUE}  Team Mode - Phase 3${RESET}`);
     console.log(`${BLUE}  ${spec.count}x ${spec.modelName}${RESET}`);
     console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
-
-    const subtasks = options.ensemble
-      ? Array(spec.count).fill(null).map((_, i) => ({ id: i + 1, task: taskTemplate, status: 'pending' }))
-      : generateSubtasks(taskTemplate, spec.count);
 
     if (options.ensemble) {
       console.log(`${YELLOW}Ensemble Mode:${RESET} Running ${spec.count} workers with same task`);
@@ -301,10 +300,6 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
 
     console.log(`${YELLOW}Spawning workers...${RESET}\n`);
   }
-
-  const subtasks = options.ensemble
-    ? Array(spec.count).fill(null).map((_, i) => ({ id: i + 1, task: taskTemplate, status: 'pending' }))
-    : generateSubtasks(taskTemplate, spec.count);
 
   const promises = subtasks.map((s) => {
     const color = MODEL_COLORS[spec.modelKey] || CYAN;

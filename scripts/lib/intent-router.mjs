@@ -117,33 +117,42 @@ export const INTENTS = {
 };
 
 /**
+ * Pre-compiled intent patterns — built once at module load, not per classify() call.
+ */
+const COMPILED_INTENTS = Object.fromEntries(
+  Object.entries(INTENTS).map(([name, config]) => [
+    name,
+    {
+      ...config,
+      compiledPatterns: config.patterns.map(p => {
+        const escaped = p.replace(/\*/g, '.*?');
+        return {
+          any: new RegExp(escaped, 'i'),
+          word: new RegExp(`\\b${escaped}\\b`, 'i')
+        };
+      })
+    }
+  ])
+);
+
+/**
  * Calculate confidence score for a single intent match
- * Uses weighted scoring based on pattern matches and context
  */
 function calculateIntentScore(prompt, intentConfig) {
   const lowerPrompt = prompt.toLowerCase();
   let score = 0;
   let matches = 0;
 
-  for (const pattern of intentConfig.patterns) {
-    const regex = new RegExp(pattern.replace(/\*/g, '.*?'), 'i');
-    if (regex.test(lowerPrompt)) {
-      // Full word matches score higher
-      const wordRegex = new RegExp(`\\b${pattern.replace(/\*/g, '.*?')}\\b`, 'i');
-      if (wordRegex.test(lowerPrompt)) {
-        score += 0.3;
-      } else {
-        score += 0.15;
-      }
+  for (const { any, word } of intentConfig.compiledPatterns) {
+    if (any.test(lowerPrompt)) {
+      score += word.test(lowerPrompt) ? 0.3 : 0.15;
       matches++;
     }
   }
 
-  // Bonus for multiple matches
   if (matches >= 3) score += 0.2;
   if (matches >= 2) score += 0.1;
 
-  // Cap at 1.0
   return Math.min(score, 1.0);
 }
 
@@ -164,7 +173,7 @@ export function classifyIntent(prompt) {
 
   const scores = [];
 
-  for (const [intentName, config] of Object.entries(INTENTS)) {
+  for (const [intentName, config] of Object.entries(COMPILED_INTENTS)) {
     const score = calculateIntentScore(prompt, config);
     if (score > 0) {
       scores.push({

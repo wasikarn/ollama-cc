@@ -6,9 +6,9 @@
 
 import { spawn } from 'child_process';
 import { MODELS, KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
-import { detectModelFromIntent, classifyIntent, getPromptTemplate } from './lib/intent-router.mjs';
+import { detectModelFromIntent, getPromptTemplate } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
-import { log, escapeShellArg, withRetry, resolveModelName } from './lib/utils.mjs';
+import { log, withRetry, resolveModelName } from './lib/utils.mjs';
 
 /**
  * Detect best model using intent-based classification
@@ -100,8 +100,7 @@ function runOllama(model, prompt, options = {}) {
       }
     }
 
-    const escapedPrompt = escapeShellArg(finalPrompt);
-    const args = ['run', model, escapedPrompt];
+    const args = ['run', model, finalPrompt];
 
     if (options.nowordwrap !== false) {
       args.push('--nowordwrap');
@@ -164,9 +163,16 @@ export async function smartRouter(prompt, options = {}) {
     process.exit(1);
   }
 
-  // Get intent-based classification
-  const classification = classifyIntent(prompt);
+  // Get intent-based classification (single call — detectModelFromIntent internally classifies)
   const detection = detectModelFromIntent(prompt, { verbose: options.verbose });
+  const classification = {
+    intent: detection.intent,
+    confidence: detection.confidence,
+    role: detection.role,
+    recommendedModel: detection.modelKey,
+    description: detection.category,
+    alternatives: detection.alternatives
+  };
 
   // Show intent classification if requested
   if (options.showIntent) {
