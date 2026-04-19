@@ -1,6 +1,7 @@
 ---
 name: ollama-cc
-description: Run Ollama cloud models (kimi, glm, gemma) with intelligent routing. Use this skill when the user wants to run LLMs through Ollama, generate code, review code, or needs quick model inference with auto-routing to the best model for the task. Trigger on phrases like "ollama", "kimi", "glm", "gemma", "run model", "smart route", "ollama code", "ollama review", "auto-select model".
+version: "1.0.0"
+description: Run Ollama cloud models (kimi, glm, gemma) with intelligent routing. Use when user wants LLM inference, code generation/review, or auto-routing to best model. Trigger on "ollama", "kimi", "glm", "gemma", "run model", "smart route".
 triggers:
   - ollama
   - kimi
@@ -100,15 +101,15 @@ Auto-detects the best model based on keywords in your prompt:
 ./ollama-wrapper.sh smart "review src/db.ts" performance
 ```
 
-## Model Specifications (Cloud Only)
+## Model Specifications
 
-All models require `ollama signin` (cloud-hosted, no local download).
+See [references/models.md](references/models.md) for detailed specs.
 
 | Model | Context | Best For | Cost |
 |-------|---------|----------|------|
-| `kimi-k2.5:cloud` | **256K** | Multimodal, UI→code, reasoning | **FREE** |
-| `glm-5.1:cloud` | ~200K | Coding SOTA, agentic debugging, 8-hour tasks | $1/M |
-| `gemma4:31b-cloud` | **256K** | OCR/document parsing, refactoring, Apache 2.0 | $0.14/M |
+| `kimi-k2.5:cloud` | **256K** | Multimodal, UI→code | **FREE** |
+| `glm-5.1:cloud` | ~200K | Coding, agentic tasks | $1/M |
+| `gemma4:31b-cloud` | **256K** | OCR, refactoring | $0.14/M |
 
 ## Setup
 

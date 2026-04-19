@@ -1,5 +1,6 @@
 ---
 name: smart
+version: "1.0.0"
 description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, etc.) and routes to kimik2.5, glm-5.1, or gemma4 with structured XML prompts.
 argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured]
 ---

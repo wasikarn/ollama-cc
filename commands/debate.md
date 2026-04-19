@@ -1,5 +1,6 @@
 ---
 name: debate
+version: "1.0.0"
 description: Run multi-model debate mode. Executes prompt on all 3 models (kimi, glm, gemma) in parallel and synthesizes consensus.
 argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach]
 ---

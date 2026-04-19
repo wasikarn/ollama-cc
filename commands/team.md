@@ -1,5 +1,6 @@
 ---
 name: team
+version: "1.0.0"
 description: Run parallel team execution with N workers. Supports distributed tasks or ensemble voting mode.
 argument-hint: <N:model> "<task>" [--ensemble] [--format json] [--detach]
 ---

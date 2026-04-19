@@ -1,5 +1,6 @@
 ---
 name: status
+version: "1.0.0"
 description: Check job status and manage the background execution daemon. View running, completed, and failed jobs with detailed output.
 argument-hint: [job-id] [--daemon] [--stats] [--running] [--completed] [--failed] [--pending] [--start] [--stop] [--cleanup]
 ---
