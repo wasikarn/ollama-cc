@@ -32,6 +32,7 @@ ollama signin
 ```
 
 Or install manually:
+
 ```bash
 # Clone to Claude Code plugins directory
 git clone https://github.com/wasikarn/ollama-cc ~/.claude/plugins/ollama-cc
@@ -114,6 +115,7 @@ Execute tasks in parallel with multiple workers:
 ```
 
 **Task Templates:**
+
 - `{i}` = 1-indexed (1, 2, 3...)
 - `{0}` = 0-indexed (0, 1, 2...)
 - `{n}` = total count
@@ -149,11 +151,11 @@ Check jobs and daemon status:
 
 ## Model Specifications
 
-| Model | Context | Best For | Cost |
-|-------|---------|----------|------|
-| `kimi-k2.5:cloud` | 256K | Multimodal, UI→code, reasoning | **FREE** |
-| `glm-5.1:cloud` | ~200K | Coding SOTA, agentic debugging | Standard |
-| `gemma4:31b-cloud` | 256K | OCR, document parsing, refactoring | Standard |
+| Model              | Context | Best For                           | Cost     |
+| ------------------ | ------- | ---------------------------------- | -------- |
+| `kimi-k2.6:cloud`  | 256K    | Multimodal, UI→code, reasoning     | **FREE** |
+| `glm-5.1:cloud`    | ~200K   | Coding SOTA, agentic debugging     | Standard |
+| `gemma4:31b-cloud` | 256K    | OCR, document parsing, refactoring | Standard |
 
 ## Configuration
 
@@ -161,7 +163,7 @@ Create `~/.ollama-cli/config.json` for custom defaults:
 
 ```json
 {
-  "default_model": "kimi-k2.5:cloud",
+  "default_model": "kimi-k2.6:cloud",
   "temperature": "0.1",
   "code_model": "glm-5.1:cloud",
   "review_model": "gemma4:31b-cloud"
@@ -171,29 +173,34 @@ Create `~/.ollama-cli/config.json` for custom defaults:
 ## Troubleshooting
 
 ### "ollama: command not found"
+
 ```bash
 npm install -g ollama
 ollama signin
 ```
 
 ### "Authentication failed" or "401 Unauthorized"
+
 ```bash
 # Re-authenticate
 ollama signin
 ```
 
 ### "Model not found" or timeout
+
 - Check internet connection
 - Verify `ollama signin` completed successfully
 - Try with explicit model: `/ollama:smart --model kimi "prompt"`
 - Check job status: `/ollama:status --failed`
 
 ### Slow responses
-- Use `kimi-k2.5:cloud` (FREE tier, often fastest)
+
+- Use `kimi-k2.6:cloud` (FREE tier, often fastest)
 - For bulk tasks, use Team Mode with `--detach` for background execution
 - Check daemon status: `/ollama:status --daemon`
 
 ### Commands not appearing
+
 ```bash
 # Reload plugins
 /reload-plugins
@@ -203,6 +210,7 @@ ollama signin
 ```
 
 ### Background jobs not completing
+
 ```bash
 # Check daemon is running
 /ollama:status --daemon
@@ -314,6 +322,7 @@ See [docs/PROPOSAL-v2.md](docs/PROPOSAL-v2.md) for full design.
 ## Changelog
 
 ### v0.1.0
+
 - Intent-based routing with role classification
 - Job lifecycle management with JSON persistence
 - Structured JSON output (`--format json`)

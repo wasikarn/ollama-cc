@@ -1,17 +1,23 @@
 ---
 name: ollama-cc
-version: "1.0.0"
-description: Run Ollama cloud models (kimi, glm, gemma) with intelligent routing. Use when user wants LLM inference, code generation/review, or auto-routing to best model. Trigger on "ollama", "kimi", "glm", "gemma", "run model", "smart route".
+type: prompt
+description: Multi-model orchestration with smart routing, team mode, and debate mode. Use this skill whenever the user mentions Ollama, multiple models, parallel execution, smart routing, model selection, team mode, debate, consensus voting, or comparing model outputs. Also trigger when the user wants automatic model selection, distributed tasks across workers, or ensemble voting. For SINGLE specific model access, use ask-kimi/ask-glm/ask-gemma instead.
 triggers:
   - ollama
-  - kimi
-  - glm
-  - gemma
-  - run model
   - smart route
+  - auto-route
+  - team mode
+  - multi-model
+  - debate
+  - consensus
+  - parallel models
   - ollama code
   - ollama review
-  - auto-select model
+  - run multiple models
+  - compare models
+  - model ensemble
+  - distribute tasks
+  - route to best model
 ---
 
 # Ollama CC Skill
@@ -37,7 +43,7 @@ Or ask Claude to run ollama commands for you.
 ./ollama-wrapper.sh smart --explain "extract from PDF"    # Shows routing decision
 
 # Direct model access
-./ollama-wrapper.sh kimi "prompt"          # Kimi K2.5 (multimodal)
+./ollama-wrapper.sh kimi "prompt"          # Kimi K2.6 (multimodal)
 ./ollama-wrapper.sh glm "prompt"           # GLM-5.1 (coding, agentic)
 ./ollama-wrapper.sh gemma "prompt"        # Gemma 4 (OCR, refactoring)
 
@@ -49,16 +55,17 @@ Or ask Claude to run ollama commands for you.
 
 Auto-detects the best model based on keywords in your prompt:
 
-| Keywords | Routes To | Why |
-|----------|-----------|-----|
-| `debug`, `error`, `fix`, `trace` | **GLM-5.1** | SWE-Bench Pro SOTA, agentic debugging |
-| `design`, `architecture`, `system` | **GLM-5.1** | 754B MoE, 8-hour agent support |
-| `OCR`, `document`, `parse`, `PDF` | **Gemma 4** | Native OCR, 256K context |
-| `UI`, `visual`, `screenshot`, `image` | **Kimi K2.5** | Cross-modal, UI→code |
-| `refactor`, `transform`, `rename` | **Gemma 4** | Fast, native function calling |
-| *(default)* | **Kimi K2.5** | Balanced, FREE, 256K context |
+| Keywords                              | Routes To     | Why                                   |
+| ------------------------------------- | ------------- | ------------------------------------- |
+| `debug`, `error`, `fix`, `trace`      | **GLM-5.1**   | SWE-Bench Pro SOTA, agentic debugging |
+| `design`, `architecture`, `system`    | **GLM-5.1**   | 744B MoE, 8-hour agent support        |
+| `OCR`, `document`, `parse`, `PDF`     | **Gemma 4**   | Native OCR, 256K context              |
+| `UI`, `visual`, `screenshot`, `image` | **Kimi K2.6** | Cross-modal, UI→code                  |
+| `refactor`, `transform`, `rename`     | **Gemma 4**   | Fast, native function calling         |
+| _(default)_                           | **Kimi K2.6** | Balanced, FREE, 256K context          |
 
 **Usage:**
+
 ```bash
 ./ollama-wrapper.sh smart "your prompt here"
 ./ollama-wrapper.sh smart --explain "your prompt"    # Shows why it routed there
@@ -66,21 +73,21 @@ Auto-detects the best model based on keywords in your prompt:
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `smart "<prompt>"` | **Auto-detect best model** (recommended) |
-| `smart --explain "<p>"` | Show routing decision |
-| `kimi "<p>"` | Kimi K2.5 (:cloud) |
-| `glm "<p>"` | GLM-5.1 (:cloud) |
-| `gemma "<p>"` | Gemma 4 31B (:cloud) |
-| `run "<p>"` | Default model execution |
-| `code "<p>"` | Code generation (temp=0.1) |
-| `review <file> [focus]` | Code review |
-| `think "<p>"` | Extended reasoning |
-| `preload [model]` | Warm model |
-| `ps` | Show loaded models |
-| `status` | Full status |
-| `help` | Show help |
+| Command                 | Description                              |
+| ----------------------- | ---------------------------------------- |
+| `smart "<prompt>"`      | **Auto-detect best model** (recommended) |
+| `smart --explain "<p>"` | Show routing decision                    |
+| `kimi "<p>"`            | Kimi K2.6 (:cloud)                       |
+| `glm "<p>"`             | GLM-5.1 (:cloud)                         |
+| `gemma "<p>"`           | Gemma 4 31B (:cloud)                     |
+| `run "<p>"`             | Default model execution                  |
+| `code "<p>"`            | Code generation (temp=0.1)               |
+| `review <file> [focus]` | Code review                              |
+| `think "<p>"`           | Extended reasoning                       |
+| `preload [model]`       | Warm model                               |
+| `ps`                    | Show loaded models                       |
+| `status`                | Full status                              |
+| `help`                  | Show help                                |
 
 ## Examples
 
@@ -105,11 +112,11 @@ Auto-detects the best model based on keywords in your prompt:
 
 See [references/models.md](references/models.md) for detailed specs.
 
-| Model | Context | Best For | Cost |
-|-------|---------|----------|------|
-| `kimi-k2.5:cloud` | **256K** | Multimodal, UI→code | **FREE** |
-| `glm-5.1:cloud` | ~200K | Coding, agentic tasks | $1/M |
-| `gemma4:31b-cloud` | **256K** | OCR, refactoring | $0.14/M |
+| Model              | Context  | Best For              | Cost     |
+| ------------------ | -------- | --------------------- | -------- |
+| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code   | **FREE** |
+| `glm-5.1:cloud`    | ~200K    | Coding, agentic tasks | $1/M     |
+| `gemma4:31b-cloud` | **256K** | OCR, refactoring      | $0.14/M  |
 
 ## Setup
 
@@ -142,9 +149,10 @@ export OLLAMA_MAX_LOADED_MODELS=2
 ## Config File
 
 `~/.ollama-cli/config.json`:
+
 ```json
 {
-  "default_model": "kimi-k2.5:cloud",
+  "default_model": "kimi-k2.6:cloud",
   "temperature": "0.1",
   "code_model": "glm-5.1:cloud",
   "review_model": "glm-5.1:cloud"
@@ -160,17 +168,32 @@ export OLLAMA_MAX_LOADED_MODELS=2
 
 ## Review Focus Types
 
-| Focus | Detects |
-|-------|---------|
-| `general` | Bugs, best practices |
-| `security` | Injection, XSS, secrets |
+| Focus         | Detects                   |
+| ------------- | ------------------------- |
+| `general`     | Bugs, best practices      |
+| `security`    | Injection, XSS, secrets   |
 | `performance` | O(n²), N+1 queries, leaks |
+
+## Related Skills
+
+Use these for **direct single-model access** when you already know which model you need:
+
+| Skill         | Model         | Best For                         | Cost     |
+| ------------- | ------------- | -------------------------------- | -------- |
+| **ask-kimi**  | **Kimi K2.6** | Multimodal, UI→code, debugging   | **FREE** |
+| **ask-glm**   | **GLM-5.1**   | Coding, architecture, agentic    | $1/M     |
+| **ask-gemma** | **Gemma 4**   | Refactoring, OCR, cost-efficient | $0.14/M  |
+
+**When to use which:**
+
+- Use **ollama-cc** (this skill): Auto-routing, multi-model, team mode, debate mode
+- Use **ask-\*** skills: Direct specific model access with artifact persistence
 
 ## Sources
 
 - [Ollama CLI Reference](https://docs.ollama.com/cli)
 - [Ollama Cloud Models](https://docs.ollama.com/cloud)
 - [Claude Code Integration](https://docs.ollama.com/integrations/claude-code)
-- [Kimi K2.5](https://ollama.com/library/kimi-k2.5)
+- [Kimi K2.6](https://ollama.com/library/kimi-k2.6)
 - [GLM-5.1](https://ollama.com/library/glm-5.1)
 - [Gemma 4](https://ollama.com/library/gemma4)

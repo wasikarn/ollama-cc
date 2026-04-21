@@ -38,7 +38,7 @@ export function log(type, message) {
  */
 export function resolveModelName(shortName) {
   const modelMap = {
-    'kimi': 'kimi-k2.5:cloud',
+    'kimi': 'kimi-k2.6:cloud',
     'glm': 'glm-5.1:cloud',
     'glm-5': 'glm-5.1:cloud',
     'glm-5.1': 'glm-5.1:cloud',

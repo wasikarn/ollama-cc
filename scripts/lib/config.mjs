@@ -17,7 +17,7 @@ export const MODELS = {
     expertise: 'Systems architecture, agentic debugging'
   },
   'kimi': {
-    name: 'kimi-k2.5:cloud',
+    name: 'kimi-k2.6:cloud',
     context: '256K',
     bestFor: ['multimodal', 'ui', 'visual', 'reasoning'],
     reason: 'Cross-modal, UI→code, FREE',

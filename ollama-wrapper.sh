@@ -14,7 +14,7 @@ Commands:
   smart <prompt>       Auto-route to best model based on prompt
   debate <prompt>      Run multi-model debate mode
   team <prompt>        Run parallel team execution
-  kimi <prompt>        Direct access to Kimi K2.5
+  kimi <prompt>        Direct access to Kimi K2.6
   glm <prompt>         Direct access to GLM-5.1
   gemma <prompt>       Direct access to Gemma 4
   status [options]     Check jobs and daemon status

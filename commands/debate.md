@@ -21,18 +21,18 @@ Run multi-model consensus with 3 Ollama models executing in parallel.
 
 ## Quality Tiers
 
-| Tier | Consensus Threshold | Output |
-|------|---------------------|--------|
-| fast | ≥90% | Agreement summary only |
-| standard | 70-90% | Shows disagreements |
-| deep | <70% | Full analysis + verdict |
+| Tier     | Consensus Threshold | Output                  |
+| -------- | ------------------- | ----------------------- |
+| fast     | ≥90%                | Agreement summary only  |
+| standard | 70-90%              | Shows disagreements     |
+| deep     | <70%                | Full analysis + verdict |
 
 ## Output Formats
 
-| Format | Description |
-|--------|-------------|
-| text | Human-readable output with colors and formatting (default) |
-| json | Machine-readable JSON with structured results |
+| Format | Description                                                |
+| ------ | ---------------------------------------------------------- |
+| text   | Human-readable output with colors and formatting (default) |
+| json   | Machine-readable JSON with structured results              |
 
 ### JSON Output Schema
 
@@ -60,7 +60,7 @@ Use `--detach` to run the debate in the background via the daemon:
 ## Flow
 
 1. Run prompt on all 3 models simultaneously:
-   - **kimi-k2.5:cloud** - Reasoning, debugging perspective
+   - **kimi-k2.6:cloud** - Reasoning, debugging perspective
    - **glm-5.1:cloud** - Architecture, systems perspective
    - **gemma4:31b-cloud** - Implementation, refactoring perspective
 

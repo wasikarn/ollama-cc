@@ -13,19 +13,20 @@ Plugin for managing Ollama cloud models with intelligent routing and job lifecyc
 
 ## Smart Router (Intent-Based)
 
-| Intent | Patterns | Routes To | Role |
-|--------|----------|-----------|------|
-| DEBUG | debug, error, fix, crash | glm-5.1 | investigator |
-| IMPLEMENT | code, implement, write function | glm-5.1 | executor |
-| DESIGN | design, architecture, pattern | glm-5.1 | architect |
-| REVIEW | review, analyze, check | glm-5.1 | reviewer |
-| REFACTOR | refactor, transform, migrate | gemma4 | refactorer |
-| DOCUMENT | ocr, document, extract | gemma4 | documenter |
-| VISUAL | ui, screenshot, mockup | kimi | designer |
-| EXPLAIN | explain, how does, what is | kimi | educator |
-| TEST | test, unit test, coverage | glm-5.1 | tester |
+| Intent    | Patterns                        | Routes To | Role         |
+| --------- | ------------------------------- | --------- | ------------ |
+| DEBUG     | debug, error, fix, crash        | glm-5.1   | investigator |
+| IMPLEMENT | code, implement, write function | glm-5.1   | executor     |
+| DESIGN    | design, architecture, pattern   | glm-5.1   | architect    |
+| REVIEW    | review, analyze, check          | glm-5.1   | reviewer     |
+| REFACTOR  | refactor, transform, migrate    | gemma4    | refactorer   |
+| DOCUMENT  | ocr, document, extract          | gemma4    | documenter   |
+| VISUAL    | ui, screenshot, mockup          | kimi      | designer     |
+| EXPLAIN   | explain, how does, what is      | kimi      | educator     |
+| TEST      | test, unit test, coverage       | glm-5.1   | tester       |
 
 ### Flags
+
 - `--show-intent` — Display intent classification
 - `--explain` — Show model selection reasoning
 - `--model <name>` — Override model (kimi, glm-5.1, gemma4)
@@ -77,9 +78,10 @@ ollama signin
 ```
 
 Optional config: `~/.ollama-cli/config.json`
+
 ```json
 {
-  "default_model": "kimi-k2.5:cloud",
+  "default_model": "kimi-k2.6:cloud",
   "code_model": "glm-5.1:cloud",
   "review_model": "gemma4:31b-cloud"
 }
@@ -87,6 +89,6 @@ Optional config: `~/.ollama-cli/config.json`
 
 ## Models
 
-- **kimi-k2.5:cloud** — 256K, multimodal, FREE
+- **kimi-k2.6:cloud** — 256K, multimodal, FREE
 - **glm-5.1:cloud** — 200K, coding SOTA
 - **gemma4:31b-cloud** — 256K, OCR, Apache 2.0

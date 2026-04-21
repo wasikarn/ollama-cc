@@ -22,12 +22,12 @@ User Command
 
 ### When to use each Mode:
 
-| Scenario | Mode | Reason |
-|----------|------|--------|
-| Quick code generation | A | Fast, cheap |
-| Need Claude artifacts | B | Get UI-rich output |
-| Complex debugging | B | Claude has tools to help |
-| Bulk processing | A | Parallel execution is faster |
+| Scenario              | Mode | Reason                       |
+| --------------------- | ---- | ---------------------------- |
+| Quick code generation | A    | Fast, cheap                  |
+| Need Claude artifacts | B    | Get UI-rich output           |
+| Complex debugging     | B    | Claude has tools to help     |
+| Bulk processing       | A    | Parallel execution is faster |
 
 ---
 
@@ -36,6 +36,7 @@ User Command
 **Concept from OMC:** `ask-kimi`, `ask-glm`, `ask-gemma` separated by expertise
 
 **How it works:**
+
 ```bash
 ./ollama-wrapper.sh smart "debug why this async fails"
 # → Analyze command → detect "debug" → route to kimi
@@ -49,27 +50,28 @@ User Command
 
 **Model Specifications:**
 
-| Model | Context | Best For |
-|-------|---------|----------|
-| **glm-5.1:cloud** | ~200K | Agentic engineering, coding SOTA, tool integration, 8-hour autonomous execution |
-| **kimi-k2.5:cloud** | **256K** | Visual reasoning, UI→code, multimodal, thinking modes |
-| **gemma4:31b-cloud** | **256K** | OCR, document parsing, reasoning, coding, function calling |
+| Model                | Context  | Best For                                                                        |
+| -------------------- | -------- | ------------------------------------------------------------------------------- |
+| **glm-5.1:cloud**    | ~200K    | Agentic engineering, coding SOTA, tool integration, 8-hour autonomous execution |
+| **kimi-k2.6:cloud**  | **256K** | Visual reasoning, UI→code, multimodal, thinking modes                           |
+| **gemma4:31b-cloud** | **256K** | OCR, document parsing, reasoning, coding, function calling                      |
 
 **Keyword Mapping:**
 
-| Keywords | Route To | Reason |
-|----------|----------|--------|
+| Keywords                            | Route To    | Reason                                 |
+| ----------------------------------- | ----------- | -------------------------------------- |
 | debug, error, fix, why, investigate | **glm-5.1** | Agentic + tool use, SWE-bench Pro SOTA |
-| design, architecture, plan, system | **glm-5.1** | 744B MoE, 8-hour agent support |
-| OCR, document, parse, extract | **gemma4** | Native OCR + document parsing |
-| UI, visual, screenshot, image→code | **kimi** | Cross-modal reasoning (UI→React) |
-| refactor, transform, rename | **gemma4** | Fast + native function calling |
+| design, architecture, plan, system  | **glm-5.1** | 744B MoE, 8-hour agent support         |
+| OCR, document, parse, extract       | **gemma4**  | Native OCR + document parsing          |
+| UI, visual, screenshot, image→code  | **kimi**    | Cross-modal reasoning (UI→React)       |
+| refactor, transform, rename         | **gemma4**  | Fast + native function calling         |
 
 **Implementation:**
+
 ```bash
 smart_detect() {
     local prompt="$1"
-    
+
     if [[ "$prompt" =~ (debug|error|fix|why|investigate) ]]; then
         echo "kimi"
     elif [[ "$prompt" =~ (design|architecture|plan|system) ]]; then
@@ -89,11 +91,13 @@ smart_detect() {
 **Concept from OMC:** `ai-delegate`, `ccg-full` — debate then adjudicator decides
 
 **How it works:**
+
 ```bash
 ./ollama-wrapper.sh debate "Should we use event sourcing or audit log?"
 ```
 
 **Flow:**
+
 ```
 1. Run 3 models with same prompt (parallel)
    ├─→ kimi: "From debugging perspective..."
@@ -112,33 +116,41 @@ smart_detect() {
 ```
 
 **Output Format:**
+
 ```markdown
 ## Multi-Model Analysis
 
 ### Kimi (Reasoning Expert)
+
 - Concerns about debugging complexity with event sourcing
 - Points to distributed tracing needs
 
 ### GLM (Architecture Expert)
+
 - Event sourcing fits audit requirements naturally
 - Warns about event schema versioning
 
 ### Gemma (Implementation Expert)
+
 - Audit log simpler to implement
 - Less operational overhead
 
 ## Agreements (High Confidence)
+
 ✓ Both approaches satisfy audit requirements
 ✓ Need idempotent event handlers
 
 ## Disagreements
+
 • Kimi vs GLM: Operational complexity (event sourcing harder to debug)
 • GLM vs Gemma: Long-term scalability (event sourcing wins at scale)
 
 ## Final Verdict
+
 **Start with audit log** (MVP), **migrate to event sourcing** when scale demands
 
 ### Action Checklist
+
 - [ ] Implement audit log table
 - [ ] Design event schema (future-proof)
 - [ ] Add migration path documentation
@@ -146,11 +158,11 @@ smart_detect() {
 
 **Quality Tiers (from ai-delegate):**
 
-| Consensus | Tier | Output |
-|-----------|------|--------|
-| ≥90% | FAST | Summary of agreements only |
-| 70-90% | STANDARD | Show disagreements |
-| <70% | DEEP | Deep analysis + judge evaluation |
+| Consensus | Tier     | Output                           |
+| --------- | -------- | -------------------------------- |
+| ≥90%      | FAST     | Summary of agreements only       |
+| 70-90%    | STANDARD | Show disagreements               |
+| <70%      | DEEP     | Deep analysis + judge evaluation |
 
 ---
 
@@ -159,6 +171,7 @@ smart_detect() {
 **Concept from OMC:** `omc-teams-ollama` — N workers parallel
 
 **How it works:**
+
 ```bash
 # Run 3 workers with different subtasks
 ./ollama-wrapper.sh team 3:kimi "Analyze file-{1..3}.ts"
@@ -174,19 +187,20 @@ smart_detect() {
 3. **Multi-Perspective:** kimi + glm + gemma together → combine results
 
 **Implementation:**
+
 ```bash
 team_mode() {
     local count="$1"    # e.g., "3"
     local model="$2"    # e.g., "kimi"
     local task="$3"
-    
+
     # Spawn parallel processes
     for i in $(seq 1 "$count"); do
         local subtask=$(echo "$task" | sed "s/{i}/$i/g")
         ollama run "${model}:cloud" "$subtask" > ".omc/artifacts/teams/${model}-${i}.md" &
     done
     wait
-    
+
     # Synthesize results
     echo "=== Team Results ===" | tee .omc/artifacts/teams/summary.md
     for f in .omc/artifacts/teams/${model}-*.md; do
@@ -203,6 +217,7 @@ team_mode() {
 **Concept from OMC:** Every skill saves output → `.omc/artifacts/`
 
 **Structure:**
+
 ```
 .omc/artifacts/ollama/
 ├── 20260418-103000-kimi-debug-async.md
@@ -218,11 +233,13 @@ team_mode() {
 ```
 
 **Benefits:**
+
 - Audit trail: "What did Claude recommend yesterday?"
 - Resume: Stop anywhere, continue later
 - Compare: Which model gave better results?
 
 **Auto-save:**
+
 ```bash
 ./ollama-wrapper.sh --artifact run "prompt"
 # Output → stdout + file
@@ -240,7 +257,7 @@ team_mode() {
 ./ollama-wrapper.sh gemma "prompt"                  # Direct to gemma
 
 # Mode B: Claude + Ollama backend
-./ollama-wrapper.sh claude --model kimi-k2.5:cloud "prompt"
+./ollama-wrapper.sh claude --model kimi-k2.6:cloud "prompt"
 ./ollama-wrapper.sh claude --model glm-5.1:cloud "prompt"
 
 # Smart Router (Auto-detect)
@@ -270,23 +287,27 @@ team_mode() {
 ## Implementation Phases
 
 ### Phase 1: Smart Router (Week 1)
+
 - [ ] Keyword detection logic
 - [ ] Route mapping table
 - [ ] `--explain` flag
 
 ### Phase 2: Debate Mode (Week 2)
+
 - [ ] Parallel execution (3 models)
 - [ ] Agreement/disagreement detection
 - [ ] Quality tier logic (FAST/STANDARD/DEEP)
 - [ ] Synthesis output
 
 ### Phase 3: Team Mode (Week 3)
+
 - [ ] Parallel worker spawning
 - [ ] Subtask templating ({1}, {2}, ...)
 - [ ] Ensemble voting
 - [ ] Summary generation
 
 ### Phase 4: Artifacts (Week 4)
+
 - [ ] Auto-save to `.omc/artifacts/ollama/`
 - [ ] Timestamp + task hash naming
 - [ ] `artifacts` and `replay` commands
@@ -296,6 +317,7 @@ team_mode() {
 ## Migration Path
 
 **Current → New (Backward Compatible):**
+
 ```bash
 # Current (still works)
 ./ollama-wrapper.sh kimi "prompt"
@@ -311,12 +333,12 @@ team_mode() {
 
 ## Comparison: Before vs After
 
-| Task | Before | After |
-|------|--------|-------|
-| Debug error | `./ollama-wrapper.sh kimi "debug..."` | `./ollama-wrapper.sh smart "debug..."` (auto) |
-| Architecture decision | Run single model, get single perspective | `./ollama-wrapper.sh debate "..."` (3 perspectives) |
-| Refactor 10 files | Run 10 times serially | `./ollama-wrapper.sh team 5:gemma "file-{i}"` (parallel) |
-| Review PR | Forgot which model recommended what | `./ollama-wrapper.sh --artifact debate "..."` (saved) |
+| Task                  | Before                                   | After                                                    |
+| --------------------- | ---------------------------------------- | -------------------------------------------------------- |
+| Debug error           | `./ollama-wrapper.sh kimi "debug..."`    | `./ollama-wrapper.sh smart "debug..."` (auto)            |
+| Architecture decision | Run single model, get single perspective | `./ollama-wrapper.sh debate "..."` (3 perspectives)      |
+| Refactor 10 files     | Run 10 times serially                    | `./ollama-wrapper.sh team 5:gemma "file-{i}"` (parallel) |
+| Review PR             | Forgot which model recommended what      | `./ollama-wrapper.sh --artifact debate "..."` (saved)    |
 
 ---
 
@@ -329,4 +351,4 @@ team_mode() {
 
 ---
 
-*Draft v2 - 2026-04-18*
+_Draft v2 - 2026-04-18_

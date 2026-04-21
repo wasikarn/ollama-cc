@@ -1,7 +1,7 @@
 ---
 name: smart
 version: "1.0.0"
-description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, etc.) and routes to kimik2.5, glm-5.1, or gemma4 with structured XML prompts.
+description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, etc.) and routes to kimi-k2.6, glm-5.1, or gemma4 with structured XML prompts.
 argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured]
 ---
 
@@ -19,29 +19,29 @@ Auto-route prompts to the best Ollama model using intelligent intent classificat
 
 ## Flags
 
-| Flag | Description |
-|------|-------------|
-| `--explain` | Show routing analysis with confidence scores |
-| `--show-intent` | Display intent classification details |
-| `--verbose` | Include full classification data |
-| `--no-structured` | Disable XML structured prompts |
-| `--model <name>` | Override model selection |
+| Flag              | Description                                  |
+| ----------------- | -------------------------------------------- |
+| `--explain`       | Show routing analysis with confidence scores |
+| `--show-intent`   | Display intent classification details        |
+| `--verbose`       | Include full classification data             |
+| `--no-structured` | Disable XML structured prompts               |
+| `--model <name>`  | Override model selection                     |
 
 ## Intent-Based Model Routing
 
 The smart router uses an intent classification system to determine the best model:
 
-| Intent | Role | Routes To | Best For |
-|--------|------|-----------|----------|
-| DEBUG | investigator | glm-5.1:cloud | Debugging, root cause analysis |
-| IMPLEMENT | executor | glm-5.1:cloud | Code implementation |
-| DESIGN | architect | glm-5.1:cloud | System architecture |
-| REVIEW | reviewer | glm-5.1:cloud | Code review |
-| REFACTOR | refactorer | gemma4:31b-cloud | Code transformation |
-| DOCUMENT | documenter | gemma4:31b-cloud | OCR, text extraction |
-| VISUAL | designer | kimi-k2.5:cloud | UI generation, multimodal |
-| EXPLAIN | educator | kimi-k2.5:cloud | Teaching, clarification |
-| TEST | tester | glm-5.1:cloud | Test generation |
+| Intent    | Role         | Routes To        | Best For                       |
+| --------- | ------------ | ---------------- | ------------------------------ |
+| DEBUG     | investigator | glm-5.1:cloud    | Debugging, root cause analysis |
+| IMPLEMENT | executor     | glm-5.1:cloud    | Code implementation            |
+| DESIGN    | architect    | glm-5.1:cloud    | System architecture            |
+| REVIEW    | reviewer     | glm-5.1:cloud    | Code review                    |
+| REFACTOR  | refactorer   | gemma4:31b-cloud | Code transformation            |
+| DOCUMENT  | documenter   | gemma4:31b-cloud | OCR, text extraction           |
+| VISUAL    | designer     | kimi-k2.6:cloud  | UI generation, multimodal      |
+| EXPLAIN   | educator     | kimi-k2.6:cloud  | Teaching, clarification        |
+| TEST      | tester       | glm-5.1:cloud    | Test generation                |
 
 ## Examples
 

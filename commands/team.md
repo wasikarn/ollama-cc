@@ -27,31 +27,32 @@ Execute tasks in parallel with multiple Ollama model workers.
 
 Format: `N:model` where N = worker count, model = kimi|glm|gemma
 
-| Model Short | Full Name | Strengths |
-|-------------|-----------|-----------|
-| kimi | kimi-k2.5:cloud | Reasoning, multimodal |
-| glm | glm-5.1:cloud | Coding, architecture |
-| gemma | gemma4:31b-cloud | Refactoring, OCR |
+| Model Short | Full Name        | Strengths             |
+| ----------- | ---------------- | --------------------- |
+| kimi        | kimi-k2.6:cloud  | Reasoning, multimodal |
+| glm         | glm-5.1:cloud    | Coding, architecture  |
+| gemma       | gemma4:31b-cloud | Refactoring, OCR      |
 
 ## Task Templates
 
 Use placeholders for distribute mode:
+
 - `{i}` - 1-indexed (1, 2, 3...)
 - `{0}` - 0-indexed (0, 1, 2...)
 - `{n}` - Total count
 
 ## Output Formats
 
-| Format | Description |
-|--------|-------------|
-| text | Human-readable output with colors and formatting (default) |
-| json | Machine-readable JSON with structured results |
+| Format | Description                                                |
+| ------ | ---------------------------------------------------------- |
+| text   | Human-readable output with colors and formatting (default) |
+| json   | Machine-readable JSON with structured results              |
 
 ### JSON Output Schema
 
 ```json
 {
-  "spec": { "count": 3, "modelKey": "kimi", "modelName": "kimi-k2.5:cloud" },
+  "spec": { "count": 3, "modelKey": "kimi", "modelName": "kimi-k2.6:cloud" },
   "mode": "ensemble|distribute",
   "summary": { "workers": 3, "totalTime": 45000, "averageTime": 15000 },
   "ensemble": { "agreement": "high", "themes": [...] },
