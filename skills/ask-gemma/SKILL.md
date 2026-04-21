@@ -25,8 +25,8 @@ triggers:
 - **Refactoring**: Fast, consistent structural changes
 - **OCR**: Native document parsing and text extraction
 - **Function Calling**: Native support for tool use
-- **Cost**: $0.14/M tokens (cheapest)
 - **Context**: 256K tokens
+- **Included**: Yes (with Ollama Cloud subscription)
 
 ## Execution
 

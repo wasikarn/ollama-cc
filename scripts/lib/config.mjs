@@ -20,7 +20,7 @@ export const MODELS = {
     name: 'kimi-k2.6:cloud',
     context: '256K',
     bestFor: ['multimodal', 'ui', 'visual', 'reasoning'],
-    reason: 'Cross-modal, UI→code, FREE',
+    reason: 'Cross-modal, UI→code generation',
     color: '\x1b[32m', // Green
     expertise: 'Multimodal reasoning, UI-to-code generation'
   },

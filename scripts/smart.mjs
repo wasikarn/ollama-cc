@@ -48,7 +48,7 @@ export function detectModel(prompt) {
   return {
     model: MODELS.kimi.name,
     category: 'General',
-    reason: 'Balanced, FREE, 256K context',
+    reason: 'Balanced, 256K context',
     intent: 'DEFAULT',
     confidence: 0.3
   };

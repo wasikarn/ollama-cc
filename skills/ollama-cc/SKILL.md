@@ -62,7 +62,7 @@ Auto-detects the best model based on keywords in your prompt:
 | `OCR`, `document`, `parse`, `PDF`     | **Gemma 4**   | Native OCR, 256K context              |
 | `UI`, `visual`, `screenshot`, `image` | **Kimi K2.6** | Cross-modal, UI→code                  |
 | `refactor`, `transform`, `rename`     | **Gemma 4**   | Fast, native function calling         |
-| _(default)_                           | **Kimi K2.6** | Balanced, FREE, 256K context          |
+| _(default)_                           | **Kimi K2.6** | Balanced, 256K context                |
 
 **Usage:**
 
@@ -110,13 +110,15 @@ Auto-detects the best model based on keywords in your prompt:
 
 ## Model Specifications
 
-See [references/models.md](references/models.md) for detailed specs.
+See [references/models.md](references/models.md) for detailed specs and pricing.
 
-| Model              | Context  | Best For              | Cost     |
-| ------------------ | -------- | --------------------- | -------- |
-| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code   | **FREE** |
-| `glm-5.1:cloud`    | ~200K    | Coding, agentic tasks | $1/M     |
-| `gemma4:31b-cloud` | **256K** | OCR, refactoring      | $0.14/M  |
+| Model              | Context  | Best For              | Ollama Cloud |
+| ------------------ | -------- | --------------------- | ------------ |
+| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code   | Included     |
+| `glm-5.1:cloud`    | ~200K    | Coding, agentic tasks | Included     |
+| `gemma4:31b-cloud` | **256K** | OCR, refactoring      | Included     |
+
+**Note:** All models are included with your Ollama Cloud subscription (Free/Pro/Max tiers). Usage is measured by GPU time, not tokens.
 
 ## Setup
 
@@ -178,11 +180,11 @@ export OLLAMA_MAX_LOADED_MODELS=2
 
 Use these for **direct single-model access** when you already know which model you need:
 
-| Skill         | Model         | Best For                         | Cost     |
-| ------------- | ------------- | -------------------------------- | -------- |
-| **ask-kimi**  | **Kimi K2.6** | Multimodal, UI→code, debugging   | **FREE** |
-| **ask-glm**   | **GLM-5.1**   | Coding, architecture, agentic    | $1/M     |
-| **ask-gemma** | **Gemma 4**   | Refactoring, OCR, cost-efficient | $0.14/M  |
+| Skill         | Model         | Best For                         | Ollama Cloud |
+| ------------- | ------------- | -------------------------------- | ------------ |
+| **ask-kimi**  | **Kimi K2.6** | Multimodal, UI→code, debugging   | Included     |
+| **ask-glm**   | **GLM-5.1**   | Coding, architecture, agentic    | Included     |
+| **ask-gemma** | **Gemma 4**   | Refactoring, OCR, cost-efficient | Included     |
 
 **When to use which:**
 

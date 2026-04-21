@@ -89,6 +89,6 @@ Optional config: `~/.ollama-cli/config.json`
 
 ## Models
 
-- **kimi-k2.6:cloud** — 256K, multimodal, FREE
+- **kimi-k2.6:cloud** — 256K, multimodal, included
 - **glm-5.1:cloud** — 200K, coding SOTA
 - **gemma4:31b-cloud** — 256K, OCR, Apache 2.0

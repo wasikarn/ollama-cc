@@ -2,18 +2,30 @@
 
 All models require `ollama signin` (cloud-hosted, no local download).
 
+## Ollama Cloud Pricing
+
+Ollama Cloud uses **subscription-based pricing** (not per-token):
+
+| Plan | Monthly Cost | Usage Level        | Concurrent Models |
+| ---- | ------------ | ------------------ | ----------------- |
+| Free | $0           | Light usage        | 1                 |
+| Pro  | $20          | 50x more than Free | 3                 |
+| Max  | $100         | 5x more than Pro   | 10                |
+
+**Note:** All models below are included in your Ollama Cloud subscription. Usage is measured by GPU time, not tokens.
+
 ## Available Models
 
-| Model              | Context  | Best For                                      | Cost     |
+| Model              | Context  | Best For                                      | Included |
 | ------------------ | -------- | --------------------------------------------- | -------- |
-| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code, reasoning                | **FREE** |
-| `glm-5.1:cloud`    | ~200K    | Coding SOTA, agentic debugging, 8-hour tasks  | $1/M     |
-| `gemma4:31b-cloud` | **256K** | OCR/document parsing, refactoring, Apache 2.0 | $0.14/M  |
+| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code, reasoning                | Yes      |
+| `glm-5.1:cloud`    | ~200K    | Coding SOTA, agentic debugging, 8-hour tasks  | Yes      |
+| `gemma4:31b-cloud` | **256K** | OCR/document parsing, refactoring, Apache 2.0 | Yes      |
 
 ## Kimi K2.6
 
-**Context:** 256K tokens
-**Cost:** FREE
+**Context:** 256K tokens  
+**Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
 
@@ -30,8 +42,8 @@ All models require `ollama signin` (cloud-hosted, no local download).
 
 ## GLM-5.1
 
-**Context:** ~200K tokens
-**Cost:** $1 per million tokens
+**Context:** ~200K tokens  
+**Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
 
@@ -49,8 +61,8 @@ All models require `ollama signin` (cloud-hosted, no local download).
 
 ## Gemma 4 (31B)
 
-**Context:** 256K tokens
-**Cost:** $0.14 per million tokens
+**Context:** 256K tokens  
+**Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
 
@@ -65,3 +77,7 @@ All models require `ollama signin` (cloud-hosted, no local download).
 - PDF parsing
 - Code refactoring
 - Cost-sensitive workloads
+
+---
+
+**Alternative:** These models can also be accessed directly via their providers' APIs (Zhipu AI for GLM, Moonshot AI for Kimi, Google for Gemma) with pay-per-token pricing, but Ollama Cloud provides a unified interface with subscription billing.

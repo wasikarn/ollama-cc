@@ -26,8 +26,8 @@ triggers:
 - **Multimodal**: Native vision support for screenshots, diagrams
 - **UI-to-Code**: Generate code from visual specifications
 - **Agentic Workflows**: Tool orchestration and iterative debugging
-- **Cost**: **FREE** (unlimited usage via Ollama cloud)
 - **Context**: 256K tokens
+- **Included**: Yes (with Ollama Cloud subscription)
 
 ## Execution
 

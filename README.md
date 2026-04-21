@@ -151,11 +151,15 @@ Check jobs and daemon status:
 
 ## Model Specifications
 
-| Model              | Context | Best For                           | Cost     |
+All models are included with your Ollama Cloud subscription.
+
+| Model              | Context | Best For                           | Included |
 | ------------------ | ------- | ---------------------------------- | -------- |
-| `kimi-k2.6:cloud`  | 256K    | Multimodal, UI→code, reasoning     | **FREE** |
-| `glm-5.1:cloud`    | ~200K   | Coding SOTA, agentic debugging     | Standard |
-| `gemma4:31b-cloud` | 256K    | OCR, document parsing, refactoring | Standard |
+| `kimi-k2.6:cloud`  | 256K    | Multimodal, UI→code, reasoning     | Yes      |
+| `glm-5.1:cloud`    | ~200K   | Coding SOTA, agentic debugging     | Yes      |
+| `gemma4:31b-cloud` | 256K    | OCR, document parsing, refactoring | Yes      |
+
+**Note:** Ollama Cloud uses subscription pricing (Free/Pro/Max tiers). Usage is measured by GPU time, not tokens. See [Ollama Cloud Pricing](https://ollama.com/cloud) for details.
 
 ## Configuration
 
@@ -195,7 +199,7 @@ ollama signin
 
 ### Slow responses
 
-- Use `kimi-k2.6:cloud` (FREE tier, often fastest)
+- Use `kimi-k2.6:cloud` (often fastest, included with subscription)
 - For bulk tasks, use Team Mode with `--detach` for background execution
 - Check daemon status: `/ollama:status --daemon`
 

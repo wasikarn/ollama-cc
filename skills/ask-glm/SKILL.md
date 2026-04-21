@@ -26,8 +26,8 @@ triggers:
 - **Coding**: SWE-Bench Verified SOTA performance
 - **Architecture**: 744B parameter MoE, 8-hour agent support
 - **Agentic Tasks**: Long-horizon planning, systematic breakdown
-- **Cost**: $1/M tokens
 - **Context**: ~200K tokens
+- **Included**: Yes (with Ollama Cloud subscription)
 
 ## Execution
 
