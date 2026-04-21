@@ -10,7 +10,6 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { withRetry } from './lib/utils.mjs';
-import { createJob } from './lib/job-store.mjs';
 import { spawnBackground } from './lib/background.mjs';
 
 const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
@@ -281,9 +280,16 @@ ${synthesis}
 }
 
 /**
+ * Estimate token count from prompt text
+ */
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+/**
  * Generate JSON output for machine-readable results
  */
-function generateJsonOutput(prompt, results, consensus, tier) {
+function generateJsonOutput(prompt, results, consensus, tier, failures = [], modelCount = results.length) {
   const modelResults = results.map(r => ({
     model: r.model,
     modelName: r.modelName,
@@ -292,19 +298,29 @@ function generateJsonOutput(prompt, results, consensus, tier) {
     output: r.output
   }));
 
+  const failureResults = failures.map(f => ({
+    model: f.model,
+    modelName: f.modelName,
+    error: f.reason
+  }));
+
   const agreements = {};
   for (const [pair, score] of Object.entries(consensus.agreements)) {
     agreements[pair] = parseFloat(score.toFixed(2));
   }
 
+  const totalTokens = estimateTokens(prompt) * modelCount;
+
   return {
     verdict: consensus.consensusLevel,
     confidence: parseFloat((consensus.averageAgreement / 100).toFixed(2)),
     models: modelResults,
+    failures: failureResults.length > 0 ? failureResults : undefined,
     agreements,
     consensusLevel: consensus.consensusLevel,
     tier,
     prompt,
+    estimatedTokens: totalTokens,
     timestamp: new Date().toISOString()
   };
 }
@@ -349,7 +365,10 @@ export async function debateMode(prompt, options = {}) {
     console.log(`${BLUE}  Quality Tier: ${tier.toUpperCase()}${RESET}`);
     console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
 
-    console.log(`${YELLOW}Running ${activeModels.length} model${activeModels.length > 1 ? 's' : ''} in parallel...${RESET}\n`);
+    const estimatedTokens = estimateTokens(prompt);
+    const totalEstTokens = estimatedTokens * activeModels.length;
+    console.log(`${YELLOW}Running ${activeModels.length} model${activeModels.length > 1 ? 's' : ''} in parallel...${RESET}`);
+    console.log(`${YELLOW}Est. tokens: ~${estimatedTokens} per model × ${activeModels.length} = ~${totalEstTokens} total${RESET}\n`);
   }
 
   const startTime = Date.now();
@@ -372,27 +391,42 @@ export async function debateMode(prompt, options = {}) {
       if (format !== 'json') {
         process.stdout.write(`${config.color}✓${RESET} (${result.duration}ms)\n`);
       }
-      return result;
+      return { status: 'fulfilled', value: result };
     }).catch(err => {
       if (format !== 'json') {
         process.stdout.write(`${config.color}✗${RESET} ERROR\n`);
       }
-      throw err;
+      return { status: 'rejected', reason: err.message, model: key, modelName: config.name };
     });
   });
 
-  let results;
-  try {
-    results = await Promise.all(promises);
-  } catch (err) {
-    console.error(`\nError: ${err.message}`);
+  const settled = await Promise.all(promises);
+  const results = settled.filter(r => r.status === 'fulfilled').map(r => r.value);
+  const failures = settled.filter(r => r.status === 'rejected');
+
+  if (results.length === 0) {
+    console.error(`\n${COLORS.red}Error: All models failed.${RESET}`);
+    for (const f of failures) {
+      console.error(`  ${f.modelName}: ${f.reason}`);
+    }
     process.exit(1);
   }
 
   const totalTime = Date.now() - startTime;
 
   if (format !== 'json') {
-    console.log(`\n${YELLOW}All models completed in ${totalTime}ms${RESET}\n`);
+    const successCount = results.length;
+    const failCount = failures.length;
+    if (failCount > 0) {
+      console.log(`\n${YELLOW}${successCount}/${successCount + failCount} models succeeded in ${totalTime}ms${RESET}\n`);
+      console.log(`${YELLOW}Failures:${RESET}`);
+      for (const f of failures) {
+        console.log(`  ${COLORS.red}✗${RESET} ${f.modelName}: ${f.reason}`);
+      }
+      console.log();
+    } else {
+      console.log(`\n${YELLOW}All ${successCount} models completed in ${totalTime}ms${RESET}\n`);
+    }
     console.log(`${BLUE}Analyzing consensus...${RESET}\n`);
   }
 
@@ -418,7 +452,7 @@ export async function debateMode(prompt, options = {}) {
 
   // Output JSON if requested
   if (format === 'json') {
-    const jsonOutput = generateJsonOutput(prompt, results, consensus, tier);
+    const jsonOutput = generateJsonOutput(prompt, results, consensus, tier, failures, activeModels.length);
     if (llmSynthesis) {
       jsonOutput.synthesis = llmSynthesis.output;
     }

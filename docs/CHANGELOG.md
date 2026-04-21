@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.2.4 — Graceful Model Failures + Cost Visibility
+
+### Added
+
+- **Graceful model failure handling** in panel — `Promise.allSettled` pattern
+  - If 1 model fails, remaining models still produce results
+  - Failures reported in output, JSON (`failures` array), and artifacts
+  - Only exits if ALL models fail
+- **Token estimates in panel** — shows `~N per model × M = ~total` before execution
+- **`estimatedTokens` field** in JSON output
+
+### Fixed
+
+- **Panel crash on single model failure** — previously `Promise.all` rejected on first failure, losing all results
+- Removed unused `getPromptTemplate` import from route.mjs
+- Removed unused `createJob` import from panel.mjs
+
 ## v0.2.3 — LLM Synthesis
 
 ### Added

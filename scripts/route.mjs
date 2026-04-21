@@ -6,7 +6,7 @@
 
 import { spawn } from 'child_process';
 import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
-import { detectModelFromIntent, getPromptTemplate, detectComplexity } from './lib/intent-router.mjs';
+import { detectModelFromIntent, detectComplexity } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
 import { log, withRetry, resolveModelName } from './lib/utils.mjs';
 

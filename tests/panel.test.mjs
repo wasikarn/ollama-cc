@@ -108,6 +108,30 @@ function analyzeConsensus(results) {
   };
 }
 
+/**
+ * Test token estimation
+ */
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+describe('estimateTokens', () => {
+  it('returns 0 for empty string', () => {
+    assert.strictEqual(estimateTokens(''), 0);
+  });
+
+  it('approximates tokens from character count', () => {
+    const text = 'hello world';
+    assert.strictEqual(estimateTokens(text), Math.ceil(11 / 4));
+  });
+
+  it('scales with prompt length', () => {
+    const short = 'hi';
+    const long = 'a'.repeat(100);
+    assert.ok(estimateTokens(long) > estimateTokens(short));
+  });
+});
+
 describe('analyzeConsensus', () => {
   it('returns high consensus for identical outputs', () => {
     const results = [
