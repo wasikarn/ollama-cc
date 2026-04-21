@@ -35,7 +35,7 @@ Commands:
   panel [--tier] "<prompt>"       Multi-model consensus
   swarm N:model "<task>"         Parallel workers
   jobs [job-id] [--stats]          Job lifecycle management
-  daemon [--start|--stop|--status] Daemon control
+  daemon [--status]              Background job status
   help                             Show this help
 
 Examples:

@@ -1,47 +1,52 @@
 ---
 name: daemon
-version: "1.0.0"
-description: Control the background execution daemon. Start, stop, and check daemon status for detached job processing.
-argument-hint: [--start] [--stop] [--status]
+version: "2.0.0"
+description: Show ephemeral background job status. No persistent daemon — processes spawn on demand and exit when done.
+argument-hint: [--status]
 ---
 
 # /ollama:daemon
 
-Control the background execution daemon for detached job processing.
+Show ephemeral background execution status.
+
+**No persistent daemon.** Background jobs run as one-shot processes: spawn, execute, exit. No idle resource usage.
 
 ## Usage
 
 ```
-/ollama:daemon --start     # Start the daemon
-/ollama:daemon --stop      # Stop the daemon
-/ollama:daemon --status    # Check daemon status
+/ollama:daemon --status    # Check background job status
 ```
 
 ## Flags
 
-| Flag       | Description                 |
-| ---------- | --------------------------- |
-| `--start`  | Start the background daemon |
-| `--stop`   | Stop the background daemon  |
-| `--status` | Show daemon status only     |
+| Flag       | Description                |
+| ---------- | -------------------------- |
+| `--status` | Show background job status |
 
-## Daemon Management
+## How Background Execution Works
 
-The daemon enables background execution via `--detach` flag on panel and swarm commands:
+Background execution uses ephemeral one-shot processes:
 
 ```bash
-# Start daemon
-/ollama:daemon --start
-
-# Submit background job
+# Spawn a background job — process starts, runs, then exits
 /ollama:panel --detach "Analyze codebase"
+# Output: Job abc123 spawned (PID: 12345)
 
-# Check job status
-/ollama:jobs --running
+# Check all jobs
+/ollama:jobs
 
-# Stop daemon when done
-/ollama:daemon --stop
+# Check background status
+/ollama:daemon --status
 ```
+
+**vs Persistent Daemon:**
+
+| Aspect      | Old (Daemon)       | New (Ephemeral)    |
+| ----------- | ------------------ | ------------------ |
+| Lifecycle   | Start → Run → Stop | Spawn → Run → Exit |
+| Idle Cost   | Always running     | Zero               |
+| Reliability | PID file, signals  | Simple spawn/unref |
+| Complexity  | Daemon worker loop | One-shot process   |
 
 ## Execution
 

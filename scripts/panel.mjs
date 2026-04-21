@@ -11,7 +11,7 @@ import { homedir } from 'os';
 import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { withRetry } from './lib/utils.mjs';
 import { createJob } from './lib/job-store.mjs';
-import { submitToDaemon } from './lib/daemon.mjs';
+import { spawnBackground } from './lib/background.mjs';
 
 const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
 
@@ -259,16 +259,15 @@ export async function debateMode(prompt, options = {}) {
   const tier = options.tier || 'standard';
   const format = options.format || 'text';
 
-  // Handle detached mode
+  // Handle detached mode — ephemeral one-shot background process
   if (options.detach) {
-    const job = createJob('debate', {
+    const result = await spawnBackground('panel', {
       prompt,
       options: { tier, format }
     });
-    await submitToDaemon(job);
-    console.log(`${YELLOW}Job ${job.id} submitted to daemon${RESET}`);
-    console.log(`Check status: omo jobs ${job.id}`);
-    return { jobId: job.id, detached: true };
+    console.log(`${YELLOW}Job ${result.jobId} spawned (PID: ${result.pid})${RESET}`);
+    console.log(`Check status: omo jobs ${result.jobId}`);
+    return { jobId: result.jobId, detached: true };
   }
 
   if (format !== 'json') {

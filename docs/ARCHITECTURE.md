@@ -91,21 +91,25 @@ User Spec → Worker Spawning (N workers)
       Result Aggregation
 ```
 
-## Job Lifecycle
+## Job Lifecycle (Ephemeral)
 
 ```
-User → createJob() → pending
-                        ↓
-Daemon → submitToDaemon() → queued
-                              ↓
-                    daemon-worker.mjs → running
-                                          ↓
-                              ┌───────────┴───────────┐
-                              ↓                       ↓
-                        markJobCompleted()     markJobFailed()
-                              ↓                       ↓
-                         completed               failed
+User → spawnBackground() → createJob() → queued
+                                           ↓
+                              spawn node background-runner.mjs <jobId>
+                                           ↓
+                              background-runner.mjs → executeJob() → running
+                                                                         ↓
+                                                           ┌───────────┴───────────┐
+                                                           ↓                       ↓
+                                                     markJobCompleted()     markJobFailed()
+                                                           ↓                       ↓
+                                                      completed               failed
+                                                           ↓
+                                                      Process exits
 ```
+
+No persistent daemon. One-shot processes: spawn, execute, exit.
 
 ## Artifact Storage
 

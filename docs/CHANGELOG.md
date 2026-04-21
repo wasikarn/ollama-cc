@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.2.1 — Ephemeral Background Execution
+
+### Changed
+
+- **Removed persistent daemon** — replaced with ephemeral one-shot processes
+  - Old: `omo daemon --start` → daemon runs forever → `omo daemon --stop`
+  - New: `--detach` spawns process → runs job → exits automatically
+  - Zero idle resource usage, simpler architecture
+- `daemon` command now shows background job status only (no start/stop)
+- `panel --detach` and `swarm --detach` use `spawnBackground()` instead of `submitToDaemon()`
+
+### Removed
+
+- `scripts/daemon-worker.mjs` — persistent daemon worker
+- `scripts/lib/daemon.mjs` — daemon lifecycle management
+- `omo daemon --start` and `omo daemon --stop` flags
+
 ## v0.2.0 — Refactor Release
 
 ### Breaking Changes

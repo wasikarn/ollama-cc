@@ -64,13 +64,16 @@ Plugin for orchestrating Ollama cloud models with intelligent routing, multi-mod
 /ollama:jobs --cleanup                    # Remove old jobs
 ```
 
-## Daemon Control
+## Background Execution
 
 ```bash
-/ollama:daemon --start                      # Start daemon
-/ollama:daemon --stop                       # Stop daemon
-/ollama:daemon --status                     # Check status
+/ollama:panel --detach "Long running task"   # Spawn background job
+/ollama:swarm --detach "Parallel task"       # Spawn background job
+/ollama:daemon --status                      # Check background status
+/ollama:jobs --running                       # List running jobs
 ```
+
+Background jobs run as **ephemeral one-shot processes**: spawn, execute, then exit. No persistent daemon, no idle resource usage.
 
 ## Direct Model Access (Unified)
 

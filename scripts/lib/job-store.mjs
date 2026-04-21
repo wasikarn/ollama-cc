@@ -179,6 +179,7 @@ export function getJobStats() {
   const stats = {
     total: jobs.length,
     pending: 0,
+    queued: 0,
     running: 0,
     completed: 0,
     failed: 0

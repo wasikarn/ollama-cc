@@ -11,7 +11,7 @@ import { homedir } from 'os';
 import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { resolveModelName, withRetry } from './lib/utils.mjs';
 import { createJob } from './lib/job-store.mjs';
-import { submitToDaemon } from './lib/daemon.mjs';
+import { spawnBackground } from './lib/background.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, blue: BLUE, cyan: CYAN, magenta: MAGENTA } = COLORS;
 
@@ -255,9 +255,9 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
 
   const format = options.format || 'text';
 
-  // Handle detached mode
+  // Handle detached mode — ephemeral one-shot background process
   if (options.detach) {
-    const job = createJob('team', {
+    const result = await spawnBackground('swarm', {
       options: {
         spec: countOrSpec,
         model,
@@ -266,14 +266,13 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
         format
       }
     });
-    await submitToDaemon(job);
     if (format !== 'json') {
-      console.log(`${YELLOW}Job ${job.id} submitted to daemon${RESET}`);
-      console.log(`Check status: omo jobs ${job.id}`);
+      console.log(`${YELLOW}Job ${result.jobId} spawned (PID: ${result.pid})${RESET}`);
+      console.log(`Check status: omo jobs ${result.jobId}`);
     } else {
-      console.log(JSON.stringify({ jobId: job.id, status: 'queued', detached: true }));
+      console.log(JSON.stringify({ jobId: result.jobId, pid: result.pid, status: 'queued', detached: true }));
     }
-    return { jobId: job.id, detached: true };
+    return { jobId: result.jobId, detached: true };
   }
 
   const subtasks = options.ensemble
