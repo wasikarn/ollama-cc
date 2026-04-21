@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.3 — LLM Synthesis
+
+### Added
+
+- **LLM-based synthesis** (`--synthesize`) for panel command
+  - After parallel model execution, runs qwen3.5 as synthesizer
+  - Produces unified response capturing consensus, disagreements, and recommendation
+  - Output included in artifacts and JSON (`synthesis` field)
+  - Graceful fallback if synthesizer fails
+
 ## v0.2.2 — Vertical Routing
 
 ### Added

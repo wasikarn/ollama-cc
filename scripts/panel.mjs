@@ -184,9 +184,69 @@ function generateSynthesis(results, consensus, tier) {
 }
 
 /**
+ * Run synthesizer model to produce unified response from all outputs
+ */
+function runSynthesizer(results, prompt) {
+  const synthesizerModel = 'qwen3.5:397b-cloud';
+
+  const perspectives = results.map(r =>
+    `=== ${r.modelName} (${r.expertise}) ===\n${r.output.slice(0, 2000)}`
+  ).join('\n\n---\n\n');
+
+  const synthesisPrompt = `You are a synthesis expert. Below are responses from multiple AI models to the same prompt. Produce a concise, unified synthesis that captures the consensus, highlights any disagreements, and provides a clear recommendation.
+
+Original prompt: ${prompt}
+
+${perspectives}
+
+Please provide:
+1. A brief summary of the consensus (if any)
+2. Key points of agreement
+3. Any disagreements or trade-offs
+4. A clear, actionable recommendation
+
+Keep your response under 400 words.`;
+
+  return new Promise((resolve, reject) => {
+    const startTime = Date.now();
+    const child = spawn('ollama', ['run', synthesizerModel, synthesisPrompt, '--nowordwrap'], {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      env: { ...process.env, ...OLLAMA_ENV }
+    });
+
+    let output = '';
+    let errorOutput = '';
+
+    child.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      errorOutput += data.toString();
+    });
+
+    child.on('close', (code) => {
+      if (code === 0) {
+        resolve({
+          modelName: synthesizerModel,
+          output: output.trim(),
+          duration: Date.now() - startTime
+        });
+      } else {
+        reject(new Error(`Synthesizer exited with code ${code}: ${errorOutput}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(new Error(`Failed to spawn synthesizer: ${err.message}`));
+    });
+  });
+}
+
+/**
  * Save debate results to artifact file
  */
-function saveArtifact(prompt, results, consensus, synthesis, tier) {
+function saveArtifact(prompt, results, consensus, synthesis, tier, llmSynthesis = null) {
   const artifactDir = join(homedir(), '.omc', 'artifacts', 'ollama-cc');
   mkdirSync(artifactDir, { recursive: true });
 
@@ -194,7 +254,7 @@ function saveArtifact(prompt, results, consensus, synthesis, tier) {
   const filename = `debate-${tier}-${timestamp}.md`;
   const filepath = join(artifactDir, filename);
 
-  const content = `# Debate Mode Analysis
+  let content = `# Debate Mode Analysis
 
 **Prompt:** ${prompt}
 **Tier:** ${tier}
@@ -208,11 +268,13 @@ ${results.map(r => `- **${r.modelName}** (${r.duration}ms) - ${r.expertise}`).jo
 ## Synthesis
 
 ${synthesis}
-
-## Full Outputs
-
-${results.map(r => `### ${r.modelName}\n\n${r.output}`).join('\n\n---\n\n')}
 `;
+
+  if (llmSynthesis) {
+    content += `\n## Synthesized Response (${llmSynthesis.modelName}, ${llmSynthesis.duration}ms)\n\n${llmSynthesis.output}\n`;
+  }
+
+  content += `\n## Full Outputs\n\n${results.map(r => `### ${r.modelName}\n\n${r.output}`).join('\n\n---\n\n')}\n`;
 
   writeFileSync(filepath, content);
   return filepath;
@@ -252,7 +314,7 @@ function generateJsonOutput(prompt, results, consensus, tier) {
  */
 export async function debateMode(prompt, options = {}) {
   if (!prompt) {
-    console.error('Error: No prompt provided. Usage: panel "<prompt>" [--tier fast|standard|deep] [--format json] [--detach]');
+    console.error('Error: No prompt provided. Usage: panel "<prompt>" [--tier fast|standard|deep] [--format json] [--detach] [--synthesize]');
     process.exit(1);
   }
 
@@ -336,9 +398,30 @@ export async function debateMode(prompt, options = {}) {
 
   const consensus = analyzeConsensus(results);
 
+  // Optional LLM-based synthesis
+  let llmSynthesis = null;
+  if (options.synthesize) {
+    if (format !== 'json') {
+      console.log(`${BLUE}Running synthesizer...${RESET}`);
+    }
+    try {
+      llmSynthesis = await runSynthesizer(results, prompt);
+      if (format !== 'json') {
+        console.log(`${BLUE}✓ Synthesizer completed (${llmSynthesis.duration}ms)${RESET}\n`);
+      }
+    } catch (err) {
+      if (format !== 'json') {
+        console.log(`${YELLOW}⚠ Synthesizer failed: ${err.message}${RESET}\n`);
+      }
+    }
+  }
+
   // Output JSON if requested
   if (format === 'json') {
     const jsonOutput = generateJsonOutput(prompt, results, consensus, tier);
+    if (llmSynthesis) {
+      jsonOutput.synthesis = llmSynthesis.output;
+    }
     console.log(JSON.stringify(jsonOutput, null, 2));
     return jsonOutput;
   }
@@ -352,7 +435,15 @@ export async function debateMode(prompt, options = {}) {
   console.log(synthesis);
   console.log();
 
-  const artifactPath = saveArtifact(prompt, results, consensus, synthesis, tier);
+  if (llmSynthesis) {
+    console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
+    console.log(`${BLUE}  SYNTHESIZED RESPONSE${RESET}`);
+    console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
+    console.log(llmSynthesis.output);
+    console.log();
+  }
+
+  const artifactPath = saveArtifact(prompt, results, consensus, synthesis, tier, llmSynthesis);
   console.log(`${YELLOW}💾 Saved to: ${artifactPath}${RESET}\n`);
 
   if (tier !== 'fast') {
@@ -387,6 +478,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const models = modelsIndex >= 0 ? args[modelsIndex + 1] : null;
 
   const detach = args.includes('--detach');
+  const synthesize = args.includes('--synthesize');
 
   // Filter out flags and their values from args
   const filteredArgs = args.filter((_, i) => {
@@ -394,12 +486,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (i === formatIndex || i === formatIndex + 1) return false;
     if (i === modelsIndex || i === modelsIndex + 1) return false;
     if (args[i] === '--detach') return false;
+    if (args[i] === '--synthesize') return false;
     return true;
   });
 
   const prompt = filteredArgs.join(' ');
 
-  debateMode(prompt, { tier, format, models, detach }).catch(err => {
+  debateMode(prompt, { tier, format, models, detach, synthesize }).catch(err => {
     console.error('Error:', err.message);
     process.exit(1);
   });

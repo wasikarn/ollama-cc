@@ -2,7 +2,7 @@
 name: panel
 version: "1.1.0"
 description: Run multi-model panel discussion. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus. Use --models to select a subset.
-argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach] [--models <model1,model2>]
+argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach] [--synthesize] [--models <model1,model2>]
 ---
 
 # /ollama:panel
@@ -22,12 +22,13 @@ Run multi-model consensus with 4 Ollama models executing in parallel.
 
 ## Flags
 
-| Flag              | Description                                            |
-| ----------------- | ------------------------------------------------------ |
-| `--tier <tier>`   | Quality tier: fast, standard, deep (default: standard) |
-| `--format json`   | JSON output for machine parsing                        |
-| `--detach`        | Run in background (ephemeral one-shot process)         |
-| `--models <list>` | Comma-separated subset of models to run                |
+| Flag              | Description                                               |
+| ----------------- | --------------------------------------------------------- |
+| `--tier <tier>`   | Quality tier: fast, standard, deep (default: standard)    |
+| `--format json`   | JSON output for machine parsing                           |
+| `--detach`        | Run in background (ephemeral one-shot process)            |
+| `--synthesize`    | Use LLM to synthesize model outputs into unified response |
+| `--models <list>` | Comma-separated subset of models to run                   |
 
 ## Quality Tiers
 
@@ -96,6 +97,8 @@ Use `--detach` to run the panel in the background:
 
 3. Synthesize consensus analysis
 
+4. Optionally run LLM synthesizer for unified response (`--synthesize`)
+
 ## Examples
 
 ```bash
@@ -116,10 +119,16 @@ Use `--detach` to run the panel in the background:
 
 # Subset of models
 /ollama:panel --models glm,qwen "Solve this math problem"
+
+# LLM synthesis — unified response from all model outputs
+/ollama:panel --synthesize "Should we adopt GraphQL or REST?"
+
+# Deep analysis with synthesis
+/ollama:panel --tier deep --synthesize "Evaluate microservices vs monolith for our startup"
 ```
 
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if models}}--models {{models}}{{/if}} {{#if detach}}--detach{{/if}}
+${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if models}}--models {{models}}{{/if}} {{#if detach}}--detach{{/if}} {{#if synthesize}}--synthesize{{/if}}
 ```
