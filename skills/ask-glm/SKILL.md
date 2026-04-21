@@ -23,9 +23,10 @@ triggers:
 
 ## Model Strengths
 
-- **Coding**: SWE-Bench Verified SOTA performance
-- **Architecture**: 744B parameter MoE, 8-hour agent support
-- **Agentic Tasks**: Long-horizon planning, systematic breakdown
+- **Coding**: SWE-Bench Pro 58.4%
+- **Agentic Engineering**: NL2Repo and Terminal-Bench 2.0 tasks
+- **Long-Horizon Tasks**: Hundreds of rounds, thousands of tool calls
+- **Iterative Reasoning**: Strategy revision and ambiguous problem solving
 - **Context**: ~200K tokens
 - **Included**: Yes (with Ollama Cloud subscription)
 

@@ -16,42 +16,47 @@ Ollama Cloud uses **subscription-based pricing** (not per-token):
 
 ## Available Models
 
-| Model                | Context     | Best For                                             | Included |
-| -------------------- | ----------- | ---------------------------------------------------- | -------- |
-| `kimi-k2.6:cloud`    | **256K**    | Multimodal, UI→code, reasoning                       | Yes      |
-| `glm-5.1:cloud`      | ~200K       | Coding SOTA, agentic debugging, 8-hour tasks         | Yes      |
-| `gemma4:31b-cloud`   | **256K**    | OCR/document parsing, refactoring, Apache 2.0        | Yes      |
-| `qwen3.5:397b-cloud` | **1M/262K** | Ultra-long context, massive documents, 201 languages | Yes      |
+| Model                | Context | Best For                                      | Included |
+| -------------------- | ------- | --------------------------------------------- | -------- |
+| `kimi-k2.6:cloud`    | 256K    | Multimodal, UI→code, agentic workflows        | Yes      |
+| `glm-5.1:cloud`      | ~200K   | Coding SOTA, agentic debugging, 8-hour tasks  | Yes      |
+| `gemma4:31b-cloud`   | 256K    | OCR/document parsing, refactoring, Apache 2.0 | Yes      |
+| `qwen3.5:397b-cloud` | 256K    | Coding, reasoning, multimodal, 201 languages  | Yes      |
 
 ## Kimi K2.6
 
 **Context:** 256K tokens  
+**Architecture:** Native multimodal agentic model  
 **Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
 
-- Cross-modal understanding (text + images)
-- UI/screenshot to code conversion
-- Long-context reasoning
-- General-purpose balanced performance
+- Native multimodal (vision, text, tools)
+- Complex end-to-end coding (Rust, Go, Python)
+- Agent swarm: 300 sub-agents, 4,000 coordinated steps
+- Production-ready UI generation from visual inputs
+- 24/7 background agents for proactive execution
 
 **Use for:**
 
 - Visual tasks, UI generation
 - Multimodal prompts
-- Default/fallback model
+- Agentic workflows
+- Complex coding tasks
 
 ## GLM-5.1
 
 **Context:** ~200K tokens  
+**Architecture:** Agentic engineering model  
 **Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
 
-- SWE-Bench Pro SOTA
-- Agentic coding capabilities
-- Extended task support (8-hour sessions)
-- 744B parameter MoE architecture
+- SWE-Bench Pro: 58.4%
+- NL2Repo and Terminal-Bench 2.0 tasks
+- Long-horizon agentic tasks (hundreds of rounds, thousands of tool calls)
+- Iterative reasoning and strategy revision
+- Ambiguous problem solving
 
 **Use for:**
 
@@ -63,6 +68,7 @@ Ollama Cloud uses **subscription-based pricing** (not per-token):
 ## Gemma 4 (31B)
 
 **Context:** 256K tokens  
+**Parameters:** 30.7B (dense), 60 layers  
 **Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
@@ -71,6 +77,7 @@ Ollama Cloud uses **subscription-based pricing** (not per-token):
 - Apache 2.0 license (open)
 - Fast inference
 - Native function calling
+- Configurable thinking mode via `<|think|>` token
 
 **Use for:**
 
@@ -81,25 +88,31 @@ Ollama Cloud uses **subscription-based pricing** (not per-token):
 
 ## Qwen 3.5 397B
 
-**Context:** 262K native, up to 1M with YaRN extension  
+**Context:** 256K tokens  
+**Parameters:** 397B total / 17B active (MoE)  
 **Included:** Yes (with Ollama Cloud subscription)
 
 **Strengths:**
 
-- Ultra-long context up to 1M tokens (longest of all models)
-- 397B total parameters / 17B active (MoE with 512 experts)
-- 201 languages supported
-- Multimodal (vision, text, video)
-- Thinking mode with reasoning output
+- MMMU: 85.0%
+- MathVision: 88.6%
+- SWE-bench Verified: 76.2%
+- AIME26: 91.3%
+- 201 languages and dialects
+- Gated Delta Networks + Sparse MoE architecture
+- Near-100% multimodal training efficiency
+- Agentic workflows (OSWorld, AndroidWorld)
 
 **Use for:**
 
-- Full codebase analysis (hundreds of files in one pass)
-- Massive document summarization (books, reports)
-- Long log analysis (months of data)
-- Multi-document comparison (hundreds of docs)
-- Translation of long texts
+- Complex reasoning tasks
+- Multimodal understanding
+- Coding and software engineering
+- Massive document analysis
+- Multi-language tasks
 
 ---
 
-**Alternative:** These models can also be accessed directly via their providers' APIs (Zhipu AI for GLM, Moonshot AI for Kimi, Google for Gemma, Alibaba Cloud for Qwen) with pay-per-token pricing, but Ollama Cloud provides a unified interface with subscription billing.
+**Note:** Parameter and context specifications for Kimi and GLM are not publicly disclosed by their providers. The values shown are estimates based on available documentation.
+
+**Alternative:** These models can also be accessed directly via their providers' APIs, but Ollama Cloud provides a unified interface with subscription billing.

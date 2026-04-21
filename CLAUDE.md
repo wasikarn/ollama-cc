@@ -89,7 +89,7 @@ Optional config: `~/.ollama-cli/config.json`
 
 ## Models
 
-- **kimi-k2.6:cloud** — 256K, multimodal, included
-- **glm-5.1:cloud** — 200K, coding SOTA
+- **kimi-k2.6:cloud** — 256K, multimodal, agentic workflows
+- **glm-5.1:cloud** — 200K, coding, agentic engineering
 - **gemma4:31b-cloud** — 256K, OCR, Apache 2.0
-- **qwen3.5:397b-cloud** — 1M/262K, ultra-long context, 201 languages
+- **qwen3.5:397b-cloud** — 256K, reasoning, 201 languages

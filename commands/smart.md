@@ -1,7 +1,7 @@
 ---
 name: smart
 version: "1.0.0"
-description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, long context, etc.) and routes to kimi-k2.6, glm-5.1, gemma4, or qwen3.5 with structured XML prompts.
+description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, reasoning, etc.) and routes to kimi-k2.6, glm-5.1, gemma4, or qwen3.5 with structured XML prompts.
 argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured]
 ---
 
@@ -31,19 +31,19 @@ Auto-route prompts to the best Ollama model using intelligent intent classificat
 
 The smart router uses an intent classification system to determine the best model:
 
-| Intent       | Role         | Routes To          | Best For                       |
-| ------------ | ------------ | ------------------ | ------------------------------ |
-| DEBUG        | investigator | glm-5.1:cloud      | Debugging, root cause analysis |
-| IMPLEMENT    | executor     | glm-5.1:cloud      | Code implementation            |
-| DESIGN       | architect    | glm-5.1:cloud      | System architecture            |
-| REVIEW       | reviewer     | glm-5.1:cloud      | Code review                    |
-| REFACTOR     | refactorer   | gemma4:31b-cloud   | Code transformation            |
-| DOCUMENT     | documenter   | gemma4:31b-cloud   | OCR, text extraction           |
-| VISUAL       | designer     | kimi-k2.6:cloud    | UI generation, multimodal      |
-| EXPLAIN      | educator     | kimi-k2.6:cloud    | Teaching, clarification        |
-| TEST         | tester       | glm-5.1:cloud      | Test generation                |
-| LONG_CONTEXT | analyst      | qwen3.5:397b-cloud | Massive documents, codebase    |
-| MASSIVE_DOC  | processor    | qwen3.5:397b-cloud | Books, logs, ultra-long texts  |
+| Intent       | Role         | Routes To          | Best For                               |
+| ------------ | ------------ | ------------------ | -------------------------------------- |
+| DEBUG        | investigator | glm-5.1:cloud      | Debugging, root cause analysis         |
+| IMPLEMENT    | executor     | glm-5.1:cloud      | Code implementation                    |
+| DESIGN       | architect    | glm-5.1:cloud      | System architecture                    |
+| REVIEW       | reviewer     | glm-5.1:cloud      | Code review                            |
+| REFACTOR     | refactorer   | gemma4:31b-cloud   | Code transformation                    |
+| DOCUMENT     | documenter   | gemma4:31b-cloud   | OCR, text extraction                   |
+| VISUAL       | designer     | kimi-k2.6:cloud    | UI generation, multimodal              |
+| EXPLAIN      | educator     | kimi-k2.6:cloud    | Teaching, clarification                |
+| TEST         | tester       | glm-5.1:cloud      | Test generation                        |
+| REASONING    | analyst      | qwen3.5:397b-cloud | Complex reasoning, math (AIME26 91.3%) |
+| MULTILINGUAL | linguist     | qwen3.5:397b-cloud | Translation, 201 languages             |
 
 ## Examples
 

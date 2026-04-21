@@ -12,17 +12,17 @@ export const MODELS = {
     name: 'glm-5.1:cloud',
     context: '200K',
     bestFor: ['debugging', 'coding', 'architecture', 'agentic'],
-    reason: 'SWE-Bench Pro SOTA, 8-hour agent support',
+    reason: 'SWE-Bench Pro 58.4%, agentic engineering',
     color: '\x1b[36m', // Cyan
     expertise: 'Systems architecture, agentic debugging'
   },
   'kimi': {
     name: 'kimi-k2.6:cloud',
     context: '256K',
-    bestFor: ['multimodal', 'ui', 'visual', 'reasoning'],
-    reason: 'Cross-modal, UI→code generation',
+    bestFor: ['multimodal', 'ui', 'visual', 'agentic'],
+    reason: 'Agent swarm, 24/7 agents, UI→code',
     color: '\x1b[32m', // Green
-    expertise: 'Multimodal reasoning, UI-to-code generation'
+    expertise: 'Multimodal agentic workflows, UI-to-code generation'
   },
   'gemma4': {
     name: 'gemma4:31b-cloud',
@@ -34,11 +34,11 @@ export const MODELS = {
   },
   'qwen': {
     name: 'qwen3.5:397b-cloud',
-    context: '1M/262K',
-    bestFor: ['long-context', 'codebase', 'massive-doc', 'analysis'],
-    reason: '1M context, ultra-long document processing',
+    context: '256K',
+    bestFor: ['reasoning', 'coding', 'multilingual', 'multimodal'],
+    reason: 'AIME26 91.3%, SWE-bench 76.2%, 201 languages',
     color: '\x1b[33m', // Yellow
-    expertise: 'Massive document analysis, full codebase reading'
+    expertise: 'Complex reasoning, coding, multilingual tasks'
   }
 };
 
@@ -60,8 +60,8 @@ export const KEYWORD_MAP = [
   { patterns: ['refactor', 'transform', 'rename', 'migrate', 'mechanical'], model: 'gemma4', category: 'Refactoring' },
   { patterns: ['ui', 'visual', 'screenshot', 'image', 'multimodal', 'from.*design'], model: 'kimi', category: 'Visual/Multimodal' },
   { patterns: ['review', 'analyze', 'check', 'audit'], model: 'glm-5.1', category: 'Analysis' },
-  { patterns: ['long.*context', 'codebase', 'entire.*repo', 'all.*files', 'massive.*doc', 'book', 'logs.*months', 'ultra.*long'], model: 'qwen', category: 'Long Context' },
-  { patterns: ['summarize.*long', 'analyze.*hundreds', 'compare.*documents', 'translation.*novel'], model: 'qwen', category: 'Massive Document' }
+  { patterns: ['complex reasoning', 'math', 'logic', 'solve.*step', 'proof', 'theorem'], model: 'qwen', category: 'Reasoning' },
+  { patterns: ['translate', 'multilingual', 'languages', 'chinese', 'japanese', 'korean', 'arabic'], model: 'qwen', category: 'Multilingual' }
 ];
 
 export const COMPILED_KEYWORD_MAP = KEYWORD_MAP.map(mapping => ({
@@ -137,16 +137,16 @@ export const ROLES = {
     systemPrompt: 'You are a testing expert. Cover edge cases and failure modes.'
   },
   analyst: {
-    description: 'Large-scale document and codebase analysis specialist',
+    description: 'Complex reasoning and mathematical specialist',
     preferredModel: 'qwen',
-    traits: ['comprehensive', 'pattern-recognition', 'synthesizing'],
-    systemPrompt: 'You are an analysis expert for massive documents and codebases. Process and synthesize vast amounts of information.'
+    traits: ['logical', 'precise', 'thorough'],
+    systemPrompt: 'You are a reasoning and mathematics expert. Provide step-by-step solutions with clear logic.'
   },
-  processor: {
-    description: 'Ultra-long document processing specialist',
+  linguist: {
+    description: 'Multilingual translation and language specialist',
     preferredModel: 'qwen',
-    traits: ['thorough', 'structured', 'meticulous'],
-    systemPrompt: 'You are a document processing expert for extremely long texts. Maintain coherence across massive contexts.'
+    traits: ['fluent', 'nuanced', 'culturally-aware'],
+    systemPrompt: 'You are a multilingual expert fluent in 201 languages. Provide accurate translations with cultural context.'
   },
   generalist: {
     description: 'General purpose assistant',

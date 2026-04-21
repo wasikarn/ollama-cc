@@ -1,16 +1,15 @@
 ---
 name: ask-qwen
 type: prompt
-description: DIRECT access to the Qwen 3.5 397B model for specific single-model tasks. Use when you KNOW you need Qwen specifically (ultra-long context up to 1M tokens, massive document analysis, full codebase reading, multi-document comparison). For automatic model selection or multi-model orchestration, use the ollama-cc skill instead.
+description: DIRECT access to the Qwen 3.5 397B model for specific single-model tasks. Use when you KNOW you need Qwen specifically (coding, reasoning, multimodal, 201 languages). For automatic model selection or multi-model orchestration, use the ollama-cc skill instead.
 triggers:
   - use qwen model
   - run with qwen
-  - qwen long context
-  - qwen massive document
-  - qwen 1m context
+  - qwen coding
+  - qwen reasoning
+  - qwen multimodal
   - ollama qwen
-  - qwen for codebase
-  - qwen analyze logs
+  - qwen 397b
 ---
 
 # Ask Qwen
@@ -19,27 +18,26 @@ triggers:
 
 **When to use ask-qwen vs ollama-cc:**
 
-- Use **ask-qwen**: You specifically need Qwen (ultra-long context up to 1M tokens, massive document analysis, full codebase reading)
+- Use **ask-qwen**: You specifically need Qwen (coding, reasoning, multimodal, 201 languages)
 - Use **ollama-cc**: You want automatic routing, multiple models, or team/debate modes
 
 ## Model Strengths
 
-- **Ultra-Long Context**: Up to 1,000,000 tokens (1M) with YaRN extension
-- **Native Context**: 262,144 tokens (262K)
-- **Architecture**: 397B total parameters / 17B active (MoE with 512 experts)
-- **Multilingual**: 201 languages supported
-- **Multimodal**: Vision-language capabilities (text, images, video)
-- **Thinking Mode**: Generates reasoning before final response
-- **Context**: 1M tokens (extended), 262K native
+- **Parameters**: 397B total / 17B active (MoE)
+- **Context**: 256K tokens
+- **Architecture**: Gated Delta Networks + Sparse MoE
+- **Multilingual**: 201 languages and dialects
+- **Multimodal**: Vision-language capabilities
+- **Benchmarks**: MMMU 85.0%, MathVision 88.6%, SWE-bench Verified 76.2%, AIME26 91.3%
 - **Included**: Yes (with Ollama Cloud subscription)
 
 ## Best Use Cases
 
-- **Full Codebase Analysis**: Read entire repositories in one pass
-- **Massive Document Summarization**: Books, reports, legal documents
-- **Long Log Analysis**: Months of logs without chunking
-- **Multi-Document Comparison**: Compare hundreds of documents simultaneously
-- **Translation of Long Texts**: Novels, technical manuals
+- **Complex Reasoning**: AIME26 91.3% performance
+- **Coding Tasks**: SWE-bench Verified 76.2%
+- **Multimodal Understanding**: MMMU 85.0%, MathVision 88.6%
+- **Multi-language Tasks**: 201 languages supported
+- **Agentic Workflows**: OSWorld and AndroidWorld benchmarks
 
 ## Execution
 
@@ -60,15 +58,15 @@ Use ask-qwen: <prompt>
 **Examples:**
 
 ```
-Use ask-qwen: summarize this 500-page technical manual
-Use ask-qwen: analyze the entire codebase for security issues
-Use ask-qwen: compare these 100 customer feedback documents
-Use ask-qwen: translate this novel from English to Thai
+Use ask-qwen: solve this complex math problem step by step
+Use ask-qwen: analyze this image and describe the UI components
+Use ask-qwen: write a Python function with reasoning
+Use ask-qwen: translate this technical document to Japanese
 ```
 
 ## See Also
 
 - **ask-kimi** - For Kimi K2.6 (multimodal, UI→code, 256K context)
 - **ask-glm** - For GLM-5.1 (coding, architecture, SWE-Bench, ~200K context)
-- **ask-gemma** - For Gemma 4 (refactoring, OCR, cost-efficient, 256K context)
+- **ask-gemma** - For Gemma 4 (refactoring, OCR, 256K context)
 - **ollama-cc** - For smart routing, multi-model, team mode
