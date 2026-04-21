@@ -1,20 +1,20 @@
 ---
-name: smart
+name: route
 version: "1.0.0"
 description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, reasoning, etc.) and routes to kimi-k2.6, glm-5.1, gemma4, or qwen3.5 with structured XML prompts.
 argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured]
 ---
 
-# /ollama:smart
+# /ollama:route
 
 Auto-route prompts to the best Ollama model using intelligent intent classification.
 
 ## Usage
 
 ```
-/ollama:smart "debug this async function"
-/ollama:smart --explain "design a microservices architecture"
-/ollama:smart --show-intent "refactor this to use repository pattern"
+/ollama:route "debug this async function"
+/ollama:route --explain "design a microservices architecture"
+/ollama:route --show-intent "refactor this to use repository pattern"
 ```
 
 ## Flags
@@ -29,7 +29,7 @@ Auto-route prompts to the best Ollama model using intelligent intent classificat
 
 ## Intent-Based Model Routing
 
-The smart router uses an intent classification system to determine the best model:
+The router uses an intent classification system to determine the best model:
 
 | Intent       | Role         | Routes To          | Best For                               |
 | ------------ | ------------ | ------------------ | -------------------------------------- |
@@ -49,25 +49,25 @@ The smart router uses an intent classification system to determine the best mode
 
 ```bash
 # Debug - routes to glm-5.1 with investigator role
-/ollama:smart "debug why this async function fails"
+/ollama:route "debug why this async function fails"
 
 # Show intent classification
-/ollama:smart --show-intent "fix the memory leak in this service"
+/ollama:route --show-intent "fix the memory leak in this service"
 
 # Design - routes to glm-5.1 with architect role
-/ollama:smart "design a payment gateway architecture"
+/ollama:route "design a payment gateway architecture"
 
 # With full explanation
-/ollama:smart --explain "refactor this to use repository pattern"
+/ollama:route --explain "refactor this to use repository pattern"
 
 # Visual - routes to kimi with designer role
-/ollama:smart "convert this screenshot to React code"
+/ollama:route "convert this screenshot to React code"
 
 # OCR - routes to gemma4 with documenter role
-/ollama:smart "extract text from this PDF"
+/ollama:route "extract text from this PDF"
 
 # Model override
-/ollama:smart --model kimi "implement a quick sort"
+/ollama:route --model kimi "implement a quick sort"
 ```
 
 ## Intent Classification Output
@@ -106,7 +106,7 @@ When enabled (default), the router wraps prompts in XML blocks:
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/smart.mjs "{{prompt}}" \
+${CLAUDE_PLUGIN_ROOT}/scripts/route.mjs "{{prompt}}" \
   {{#if explain}}--explain{{/if}} \
   {{#if show-intent}}--show-intent{{/if}} \
   {{#if verbose}}--verbose{{/if}}

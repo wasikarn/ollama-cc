@@ -1,21 +1,21 @@
 ---
-name: team
+name: swarm
 version: "1.0.0"
-description: Run parallel team execution with N workers. Supports distributed tasks or ensemble voting mode.
+description: Run parallel swarm execution with N workers. Supports distributed tasks or ensemble voting mode.
 argument-hint: <N:model> "<task>" [--ensemble] [--format json] [--detach]
 ---
 
-# /ollama:team
+# /ollama:swarm
 
 Execute tasks in parallel with multiple Ollama model workers.
 
 ## Usage
 
 ```
-/ollama:team 3:kimi "analyze file-{i}.ts"
-/ollama:team 5:gemma "refactor module" --ensemble
-/ollama:team 3:glm "review code" --format json
-/ollama:team 5:kimi "analyze project" --detach
+/ollama:swarm 3:kimi "analyze file-{i}.ts"
+/ollama:swarm 5:gemma "refactor module" --ensemble
+/ollama:swarm 3:glm "review code" --format json
+/ollama:swarm 5:kimi "analyze project" --detach
 ```
 
 ## Specifications
@@ -64,41 +64,41 @@ Use placeholders for distribute mode:
 
 ## Background Execution
 
-Use `--detach` to run the team in the background via the daemon:
+Use `--detach` to run the swarm in the background via the daemon:
 
 ```bash
-/ollama:team 5:kimi "analyze project" --detach
+/ollama:swarm 5:kimi "analyze project" --detach
 # Check status later
-/ollama:status <job-id>
+/ollama:jobs <job-id>
 ```
 
 ## Examples
 
 ```bash
 # Distribute: Analyze 3 different files
-/ollama:team 3:kimi "analyze src/utils-{i}.ts"
+/ollama:swarm 3:kimi "analyze src/utils-{i}.ts"
 
 # Distribute: Refactor 5 modules
-/ollama:team 5:gemma "refactor src/module-{i}"
+/ollama:swarm 5:gemma "refactor src/module-{i}"
 
 # Ensemble: 4 workers vote on same task
-/ollama:team 4:glm "Review this PR for security issues" --ensemble
+/ollama:swarm 4:glm "Review this PR for security issues" --ensemble
 
 # Distribute: Process files 0-9
-/ollama:team 10:kimi "extract data from log-{0}.txt"
+/ollama:swarm 10:kimi "extract data from log-{0}.txt"
 
 # JSON output for integration
-/ollama:team 3:glm "review architecture" --format json
+/ollama:swarm 3:glm "review architecture" --format json
 
 # Background execution for long tasks
-/ollama:team 10:kimi "analyze entire codebase" --detach
+/ollama:swarm 10:kimi "analyze entire codebase" --detach
 
 # Distribute: Process massive documents with Qwen
-/ollama:team 3:qwen "summarize document-{i}.pdf" --detach
+/ollama:swarm 3:qwen "summarize document-{i}.pdf" --detach
 ```
 
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/team.mjs "{{spec}}" "{{task}}" {{#if ensemble}}--ensemble{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}}
+${CLAUDE_PLUGIN_ROOT}/scripts/swarm.mjs "{{spec}}" "{{task}}" {{#if ensemble}}--ensemble{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}}
 ```

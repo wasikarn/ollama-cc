@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Background Execution Daemon
+ * OMO - Background Execution Daemon
  * Manages background job execution
  */
 
@@ -186,7 +186,7 @@ export async function executeJob(job) {
  */
 async function executeDebateJob(job) {
   // Import debate module dynamically
-  const { debateMode } = await import('../debate.mjs');
+  const { debateMode } = await import('../panel.mjs');
 
   // Capture output by overriding console
   const outputs = [];
@@ -212,7 +212,7 @@ async function executeDebateJob(job) {
  * Execute team job
  */
 async function executeTeamJob(job) {
-  const { teamMode } = await import('../team.mjs');
+  const { teamMode } = await import('../swarm.mjs');
 
   const outputs = [];
   const originalLog = console.log;

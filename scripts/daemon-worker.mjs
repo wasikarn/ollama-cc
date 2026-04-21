@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Daemon Worker Process
+ * OMO - Daemon Worker Process
  * Background process that executes queued jobs
  */
 

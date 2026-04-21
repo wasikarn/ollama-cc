@@ -1,24 +1,24 @@
 {
-	"name": "ollama-cc",
-	"description": "Ollama cloud models with intelligent routing, job lifecycle management, and background execution.",
-	"version": "0.1.0",
-	"license": "MIT",
-	"keywords": [
-		"ollama",
-		"llm",
-		"ai",
-		"kimi",
-		"glm",
-		"gemma",
-		"multi-model",
-		"parallel",
-		"consensus",
-		"orchestration"
-	],
-	"author": {
-		"name": "kobig",
-		"url": "https://github.com/wasikarn"
-	},
-	"homepage": "https://github.com/wasikarn/ollama-cc#readme",
-	"repository": "https://github.com/wasikarn/ollama-cc"
+  "name": "ollama-cc",
+  "description": "Ollama Model Orchestrator (OMO) — intelligent routing, multi-model consensus, and parallel worker execution.",
+  "version": "0.2.0",
+  "license": "MIT",
+  "keywords": [
+    "ollama",
+    "llm",
+    "ai",
+    "kimi",
+    "glm",
+    "gemma",
+    "multi-model",
+    "parallel",
+    "consensus",
+    "orchestration"
+  ],
+  "author": {
+    "name": "kobig",
+    "url": "https://github.com/wasikarn"
+  },
+  "homepage": "https://github.com/wasikarn/ollama-cc#readme",
+  "repository": "https://github.com/wasikarn/ollama-cc"
 }

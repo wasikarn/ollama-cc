@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Prompt Builder - v0.3.0
+ * OMO - Prompt Builder
  * XML prompt block system for structured, context-aware prompts
  */
 

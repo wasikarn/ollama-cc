@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ollama CLI Plugin - Smart Router (Phase 3 - v0.3.0)
+ * OMO - Route Command
  * Intent-based model routing with XML prompt blocks
  */
 
@@ -158,7 +158,7 @@ async function runOllamaWithRetry(model, prompt, options = {}) {
  */
 export async function smartRouter(prompt, options = {}) {
   if (!prompt) {
-    log('error', 'No prompt provided. Usage: smart "<prompt>" [--explain] [--show-intent]');
+    log('error', 'No prompt provided. Usage: route "<prompt>" [--explain] [--show-intent]');
     process.exit(1);
   }
 

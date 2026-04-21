@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Main Entry Point
+ * OMO - Main Entry Point
  * Provides unified CLI for all commands
  */
 
-import { smartRouter } from './smart.mjs';
-import { debateMode } from './debate.mjs';
-import { teamMode } from './team.mjs';
+import { smartRouter } from './route.mjs';
+import { debateMode } from './panel.mjs';
+import { teamMode } from './swarm.mjs';
 import { parseArgs } from './lib/utils.mjs';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -28,21 +28,22 @@ function getVersion() {
 const VERSION = getVersion();
 
 const USAGE = `
-Ollama CC v${VERSION}
+OMO v${VERSION} — Ollama Model Orchestrator
 
 Commands:
-  smart [--explain] "<prompt>"     Auto-route to best model (Phase 1)
-  debate [--tier] "<prompt>"      Multi-model consensus (Phase 2)
-  team N:model "<task>"           Parallel workers (Phase 3)
-  status                          Check plugin status
-  help                            Show this help
+  route [--explain] "<prompt>"     Auto-route to best model
+  panel [--tier] "<prompt>"       Multi-model consensus
+  swarm N:model "<task>"         Parallel workers
+  jobs [job-id] [--stats]          Job lifecycle management
+  daemon [--start|--stop|--status] Daemon control
+  help                             Show this help
 
 Examples:
-  ollama-cc smart "debug this error"
-  ollama-cc smart --explain "refactor this code"
-  ollama-cc debate "Should we use microservices?"
-  ollama-cc debate --tier fast "Quick check"
-  ollama-cc team 3:kimi "analyze file-{i}.ts"
+  omo route "debug this error"
+  omo route --explain "refactor this code"
+  omo panel "Should we use microservices?"
+  omo panel --tier fast "Quick check"
+  omo swarm 3:kimi "analyze file-{i}.ts"
 `;
 
 async function main() {
@@ -50,6 +51,7 @@ async function main() {
   const command = positionals[0];
 
   switch (command) {
+    case 'route':
     case 'smart': {
       const explainFlag = flags.explain === true;
       const prompt = positionals.slice(1).join(' ');
@@ -57,6 +59,7 @@ async function main() {
       break;
     }
 
+    case 'panel':
     case 'debate': {
       const tier = flags.tier || 'standard';
       const prompt = positionals.slice(1).join(' ');
@@ -64,6 +67,7 @@ async function main() {
       break;
     }
 
+    case 'swarm':
     case 'team': {
       const ensembleFlag = flags.ensemble === true;
       const teamSpec = positionals[1];
@@ -72,12 +76,20 @@ async function main() {
       break;
     }
 
-    case 'status':
-      console.log(`Ollama CC v${VERSION}`);
-      console.log('Phase 1 (Smart Router): ✓ Active');
-      console.log('Phase 2 (Debate Mode): ✓ Active');
-      console.log('Phase 3 (Team Mode): ✓ Active');
+    case 'jobs':
+    case 'status': {
+      const { default: jobsMain } = await import('./jobs.mjs');
+      process.argv = ['node', 'jobs.mjs', ...positionals.slice(1)];
+      jobsMain();
       break;
+    }
+
+    case 'daemon': {
+      const { default: daemonMain } = await import('./daemon.mjs');
+      process.argv = ['node', 'daemon.mjs', ...positionals.slice(1)];
+      daemonMain();
+      break;
+    }
 
     case 'help':
     default:

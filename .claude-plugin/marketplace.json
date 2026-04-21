@@ -1,7 +1,7 @@
 {
   "name": "ollama-cc",
   "metadata": {
-    "description": "Ollama cloud models with intelligent routing, job lifecycle management, and background execution. Features Smart Router with intent classification, Debate Mode with structured JSON output, Team Mode with ensemble voting, and daemon-based background processing."
+    "description": "Ollama Model Orchestrator (OMO) — intelligent routing, multi-model consensus, and parallel worker execution. Features Route (intent-based model selection), Panel (multi-model consensus), Swarm (parallel workers), Jobs (lifecycle management), and Daemon (background execution)."
   },
   "owner": {
     "name": "kobig"
@@ -10,8 +10,8 @@
     {
       "name": "ollama-cc",
       "source": "./",
-      "description": "Ollama cloud models with intelligent routing, job lifecycle management, and background execution. Features Smart Router with intent classification, Debate Mode with structured JSON output, Team Mode with ensemble voting, and daemon-based background processing.",
-      "version": "0.1.0",
+      "description": "Ollama Model Orchestrator (OMO) — intelligent routing, multi-model consensus, and parallel worker execution. Features Route (intent-based model selection), Panel (multi-model consensus), Swarm (parallel workers), Jobs (lifecycle management), and Daemon (background execution).",
+      "version": "0.2.0",
       "author": {
         "name": "kobig"
       },

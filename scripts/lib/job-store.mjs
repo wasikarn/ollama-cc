@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Job Store
+ * OMO - Job Store
  * Job lifecycle management with JSON persistence
- * Jobs stored in ~/.ollama-cc/jobs/
  */
 
 import { mkdirSync, existsSync, writeFileSync, readFileSync, readdirSync, unlinkSync, statSync } from 'fs';

@@ -1,0 +1,47 @@
+# Changelog
+
+## v0.2.0 — Refactor Release
+
+### Breaking Changes
+
+- **Renamed commands** for clarity:
+  - `smart` → `route` (auto-route to best model)
+  - `debate` → `panel` (panel of experts consensus)
+  - `team` → `swarm` (parallel worker swarm)
+  - `status` → `jobs` + `daemon` (separated concerns)
+- **Renamed skill**: `ollama-cc` → `omo`
+- **Renamed CLI**: `ollama-cc` → `omo`, `ollama-smart` → `omo-route`, etc.
+
+### Added
+
+- `/ollama:ask` command for unified direct model access
+- `/ollama:daemon` command for daemon control
+- `omo-daemon` CLI binary
+- Backward compatibility aliases in CLI (`smart`, `debate`, `team`, `status`)
+- `docs/ARCHITECTURE.md`
+- `docs/MIGRATION.md`
+
+### Changed
+
+- `status` command split into `jobs` (job lifecycle) and `daemon` (daemon control)
+- Script names now match command names: `route.mjs`, `panel.mjs`, `swarm.mjs`, `jobs.mjs`, `daemon.mjs`
+- Main entry point renamed from `index.mjs` to `omo.mjs`
+- Wrapper script updated with new commands and backward-compatible aliases
+
+### Removed
+
+- Empty `agents/` directory
+- Old command files: `commands/smart.md`, `commands/debate.md`, `commands/team.md`, `commands/status.md`
+- Old skill directory: `skills/ollama-cc/`
+
+## v0.1.0 — Initial Release
+
+- Intent-based routing with role classification
+- Job lifecycle management with JSON persistence
+- Structured JSON output (`--format json`)
+- Background execution with daemon (`--detach`)
+- Status command for job monitoring
+- Retry logic with exponential backoff
+- XML prompt block system
+- Multi-model debate mode with consensus scoring
+- Team mode with parallel workers and ensemble voting

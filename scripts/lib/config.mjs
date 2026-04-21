@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Shared configuration for Ollama CC commands
+ * OMO - Shared configuration
  */
 
 import { homedir } from 'os';

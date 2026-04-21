@@ -1,17 +1,18 @@
-# Ollama CC
+# Ollama Model Orchestrator (OMO)
 
 ## Purpose
 
-Plugin for managing Ollama cloud models with intelligent routing and job lifecycle management
+Plugin for orchestrating Ollama cloud models with intelligent routing, multi-model consensus, and parallel worker execution.
 
 ## Commands
 
-- `/ollama:smart` — Auto-route based on intent classification
-- `/ollama:debate` — Multi-model consensus with JSON output
-- `/ollama:team` — Parallel execution with distribute or ensemble modes
-- `/ollama:status` — Job management and daemon control
+- `/ollama:route` — Auto-route prompts to the best model via intent classification
+- `/ollama:panel` — Multi-model consensus with structured JSON output
+- `/ollama:swarm` — Parallel execution with distribute or ensemble modes
+- `/ollama:jobs` — Job lifecycle management and history
+- `/ollama:daemon` — Background execution daemon control
 
-## Smart Router (Intent-Based)
+## Intent-Based Router
 
 | Intent    | Patterns                        | Routes To | Role         |
 | --------- | ------------------------------- | --------- | ------------ |
@@ -25,50 +26,59 @@ Plugin for managing Ollama cloud models with intelligent routing and job lifecyc
 | EXPLAIN   | explain, how does, what is      | kimi      | educator     |
 | TEST      | test, unit test, coverage       | glm-5.1   | tester       |
 
-### Flags
+### Route Flags
 
 - `--show-intent` — Display intent classification
 - `--explain` — Show model selection reasoning
 - `--model <name>` — Override model (kimi, glm-5.1, gemma4)
 - `--no-structured` — Disable XML prompt blocks
 
-## Debate Mode
+## Panel Mode (Multi-Model Consensus)
 
 ```bash
-/ollama:debate "Should we use event sourcing?"
-/ollama:debate --tier fast "Quick check"
-/ollama:debate --tier deep "Complex analysis"
-/ollama:debate --format json "For automation"
-/ollama:debate --detach "Background execution"
+/ollama:panel "Should we use event sourcing?"
+/ollama:panel --tier fast "Quick check"
+/ollama:panel --tier deep "Complex analysis"
+/ollama:panel --format json "For automation"
+/ollama:panel --detach "Background execution"
 ```
 
-## Team Mode
+## Swarm Mode (Parallel Workers)
 
 ```bash
-/ollama:team 3:kimi "analyze file-{i}.ts"           # Distribute
-/ollama:team 5:gemma "Review PR" --ensemble         # Ensemble voting
-/ollama:team 10:glm "refactor" --detach            # Background
-/ollama:team 3:kimi "task" --format json           # JSON output
+/ollama:swarm 3:kimi "analyze file-{i}.ts"           # Distribute
+/ollama:swarm 5:gemma "Review PR" --ensemble         # Ensemble voting
+/ollama:swarm 10:glm "refactor" --detach            # Background
+/ollama:swarm 3:kimi "task" --format json           # JSON output
 ```
 
 ## Job Management
 
 ```bash
-/ollama:status                              # View all jobs
-/ollama:status --running                    # Running jobs
-/ollama:status --completed                  # Completed jobs
-/ollama:status --failed                     # Failed jobs
-/ollama:status <job-id>                     # View details
-/ollama:status --stats                      # Summary statistics
-/ollama:status --cleanup                    # Remove old jobs
+/ollama:jobs                              # View all jobs
+/ollama:jobs --running                    # Running jobs
+/ollama:jobs --completed                  # Completed jobs
+/ollama:jobs --failed                     # Failed jobs
+/ollama:jobs <job-id>                     # View details
+/ollama:jobs --stats                      # Summary statistics
+/ollama:jobs --cleanup                    # Remove old jobs
 ```
 
 ## Daemon Control
 
 ```bash
-/ollama:status --start                      # Start daemon
-/ollama:status --stop                       # Stop daemon
-/ollama:status --daemon                     # Check status
+/ollama:daemon --start                      # Start daemon
+/ollama:daemon --stop                       # Stop daemon
+/ollama:daemon --status                     # Check status
+```
+
+## Direct Model Access (Unified)
+
+```bash
+/ollama:ask kimi "prompt"       # Kimi K2.6
+/ollama:ask glm "prompt"        # GLM-5.1
+/ollama:ask gemma "prompt"      # Gemma 4
+/ollama:ask qwen "prompt"       # Qwen 3.5
 ```
 
 ## Setup

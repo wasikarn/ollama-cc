@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Shared utilities for Ollama CC commands
+ * OMO - Shared utilities
  */
 
 import { COLORS } from './config.mjs';

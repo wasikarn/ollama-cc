@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Debate Mode (Phase 2 v0.2.0)
+ * OMO - Panel Command
  * Multi-model consensus with quality tiers, JSON output, and daemon support
  */
 
@@ -252,7 +252,7 @@ function generateJsonOutput(prompt, results, consensus, tier) {
  */
 export async function debateMode(prompt, options = {}) {
   if (!prompt) {
-    console.error('Error: No prompt provided. Usage: debate "<prompt>" [--tier fast|standard|deep] [--format json] [--detach]');
+    console.error('Error: No prompt provided. Usage: panel "<prompt>" [--tier fast|standard|deep] [--format json] [--detach]');
     process.exit(1);
   }
 
@@ -267,7 +267,7 @@ export async function debateMode(prompt, options = {}) {
     });
     await submitToDaemon(job);
     console.log(`${YELLOW}Job ${job.id} submitted to daemon${RESET}`);
-    console.log(`Check status: ollama-cc status ${job.id}`);
+    console.log(`Check status: omo jobs ${job.id}`);
     return { jobId: job.id, detached: true };
   }
 

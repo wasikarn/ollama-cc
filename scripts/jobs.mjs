@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Status Command
+ * OMO - Jobs Command
  * CLI for checking job status
- * Usage: ollama-cc status [job-id]
+ * Usage: omo jobs [job-id]
  */
 
 import { listJobs, getJob, getJobStats, cleanupOldJobs } from './lib/job-store.mjs';
-import { isDaemonRunning, getDaemonPid, startDaemon, stopDaemon } from './lib/daemon.mjs';
 import { COLORS } from './lib/config.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, blue: BLUE, cyan: CYAN, red: RED } = COLORS;
@@ -43,26 +42,6 @@ function getStatusIcon(status) {
     case 'failed': return `${RED}✗${RESET}`;
     default: return `${YELLOW}?${RESET}`;
   }
-}
-
-/**
- * Show daemon status
- */
-function showDaemonStatus() {
-  const running = isDaemonRunning();
-  const pid = getDaemonPid();
-
-  console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}`);
-  console.log(`${BLUE}  Daemon Status${RESET}`);
-  console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
-
-  if (running) {
-    console.log(`Status: ${GREEN}Running${RESET}`);
-    console.log(`PID: ${pid}`);
-  } else {
-    console.log(`Status: ${YELLOW}Not Running${RESET}`);
-  }
-  console.log();
 }
 
 /**
@@ -170,20 +149,17 @@ function showJobDetail(jobId) {
  * Show help
  */
 function showHelp() {
-  console.log(`${BLUE}Ollama CC Status${RESET} - Job status and daemon management\n`);
+  console.log(`${BLUE}OMO Jobs${RESET} — Job lifecycle management\n`);
   console.log('Usage:');
-  console.log('  ollama-cc status              List all jobs');
-  console.log('  ollama-cc status <job-id>     Show job details');
-  console.log('  ollama-cc status --daemon     Show daemon status');
-  console.log('  ollama-cc status --stats      Show job statistics');
-  console.log('  ollama-cc status --running    List running jobs only');
-  console.log('  ollama-cc status --completed  List completed jobs only');
-  console.log('  ollama-cc status --failed     List failed jobs only');
-  console.log('  ollama-cc status --pending    List pending jobs only');
-  console.log('  ollama-cc status --cleanup    Clean up old jobs (7 days)');
-  console.log('  ollama-cc status --start      Start daemon');
-  console.log('  ollama-cc status --stop       Stop daemon');
-  console.log('  ollama-cc status --help       Show this help');
+  console.log('  omo jobs              List all jobs');
+  console.log('  omo jobs <job-id>     Show job details');
+  console.log('  omo jobs --stats      Show job statistics');
+  console.log('  omo jobs --running    List running jobs only');
+  console.log('  omo jobs --completed  List completed jobs only');
+  console.log('  omo jobs --failed     List failed jobs only');
+  console.log('  omo jobs --pending    List pending jobs only');
+  console.log('  omo jobs --cleanup    Clean up old jobs (7 days)');
+  console.log('  omo jobs --help       Show this help');
 }
 
 /**
@@ -195,24 +171,6 @@ function main() {
   // Help
   if (args.includes('--help') || args.includes('-h')) {
     showHelp();
-    return;
-  }
-
-  // Daemon control
-  if (args.includes('--start')) {
-    const result = startDaemon();
-    console.log(result.message);
-    return;
-  }
-
-  if (args.includes('--stop')) {
-    const result = stopDaemon();
-    console.log(result.message);
-    return;
-  }
-
-  if (args.includes('--daemon')) {
-    showDaemonStatus();
     return;
   }
 
@@ -254,8 +212,7 @@ function main() {
     return;
   }
 
-  // Default: list all jobs and show daemon status
-  showDaemonStatus();
+  // Default: list all jobs and show stats
   showStats();
   listAllJobs();
 }

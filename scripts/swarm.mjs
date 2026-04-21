@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Ollama CC - Team Mode (Phase 3 v0.2.0)
+ * OMO - Swarm Command
  * Parallel workers with ensemble voting, task distribution, JSON output, and daemon support
  */
 
@@ -269,7 +269,7 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
     await submitToDaemon(job);
     if (format !== 'json') {
       console.log(`${YELLOW}Job ${job.id} submitted to daemon${RESET}`);
-      console.log(`Check status: ollama-cc status ${job.id}`);
+      console.log(`Check status: omo jobs ${job.id}`);
     } else {
       console.log(JSON.stringify({ jobId: job.id, status: 'queued', detached: true }));
     }

@@ -1,8 +1,7 @@
 #!/usr/bin/env node
 /**
- * Intent Router - v0.3.0
+ * OMO - Intent Router
  * Intent-based classification system for model routing
- * Replaces simple keyword matching with contextual intent detection
  */
 
 import { MODELS, ROLES, INTENT_PATTERNS, CONFIDENCE_THRESHOLD } from './config.mjs';

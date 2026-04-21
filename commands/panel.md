@@ -1,22 +1,22 @@
 ---
-name: debate
+name: panel
 version: "1.0.0"
-description: Run multi-model debate mode. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus.
+description: Run multi-model panel discussion. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus.
 argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach]
 ---
 
-# /ollama:debate
+# /ollama:panel
 
 Run multi-model consensus with 3 Ollama models executing in parallel.
 
 ## Usage
 
 ```
-/ollama:debate "Should we use event sourcing or audit log?"
-/ollama:debate --tier fast "Is this code secure?"
-/ollama:debate --tier deep "Architecture trade-offs for scale"
-/ollama:debate --format json "Review this code"
-/ollama:debate --detach "Long running analysis"
+/ollama:panel "Should we use event sourcing or audit log?"
+/ollama:panel --tier fast "Is this code secure?"
+/ollama:panel --tier deep "Architecture trade-offs for scale"
+/ollama:panel --format json "Review this code"
+/ollama:panel --detach "Long running analysis"
 ```
 
 ## Quality Tiers
@@ -49,12 +49,12 @@ Run multi-model consensus with 3 Ollama models executing in parallel.
 
 ## Background Execution
 
-Use `--detach` to run the debate in the background via the daemon:
+Use `--detach` to run the panel in the background via the daemon:
 
 ```bash
-/ollama:debate --detach "Long running analysis"
+/ollama:panel --detach "Long running analysis"
 # Check status later
-/ollama:status <job-id>
+/ollama:jobs <job-id>
 ```
 
 ## Flow
@@ -72,24 +72,24 @@ Use `--detach` to run the debate in the background via the daemon:
 ## Examples
 
 ```bash
-# Standard debate (default)
-/ollama:debate "Should we use microservices or monolith?"
+# Standard panel (default)
+/ollama:panel "Should we use microservices or monolith?"
 
 # Quick consensus check
-/ollama:debate --tier fast "Is this function pure?"
+/ollama:panel --tier fast "Is this function pure?"
 
 # Deep analysis with trade-offs
-/ollama:debate --tier deep "Database sharding strategy"
+/ollama:panel --tier deep "Database sharding strategy"
 
 # JSON output for integration
-/ollama:debate --format json "Review this API design"
+/ollama:panel --format json "Review this API design"
 
 # Background execution
-/ollama:debate --detach "Analyze codebase architecture"
+/ollama:panel --detach "Analyze codebase architecture"
 ```
 
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/debate.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}}
+${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}}
 ```
