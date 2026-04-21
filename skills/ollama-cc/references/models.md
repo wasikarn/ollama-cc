@@ -16,11 +16,12 @@ Ollama Cloud uses **subscription-based pricing** (not per-token):
 
 ## Available Models
 
-| Model              | Context  | Best For                                      | Included |
-| ------------------ | -------- | --------------------------------------------- | -------- |
-| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code, reasoning                | Yes      |
-| `glm-5.1:cloud`    | ~200K    | Coding SOTA, agentic debugging, 8-hour tasks  | Yes      |
-| `gemma4:31b-cloud` | **256K** | OCR/document parsing, refactoring, Apache 2.0 | Yes      |
+| Model                | Context     | Best For                                             | Included |
+| -------------------- | ----------- | ---------------------------------------------------- | -------- |
+| `kimi-k2.6:cloud`    | **256K**    | Multimodal, UI→code, reasoning                       | Yes      |
+| `glm-5.1:cloud`      | ~200K       | Coding SOTA, agentic debugging, 8-hour tasks         | Yes      |
+| `gemma4:31b-cloud`   | **256K**    | OCR/document parsing, refactoring, Apache 2.0        | Yes      |
+| `qwen3.5:397b-cloud` | **1M/262K** | Ultra-long context, massive documents, 201 languages | Yes      |
 
 ## Kimi K2.6
 
@@ -78,6 +79,27 @@ Ollama Cloud uses **subscription-based pricing** (not per-token):
 - Code refactoring
 - Cost-sensitive workloads
 
+## Qwen 3.5 397B
+
+**Context:** 262K native, up to 1M with YaRN extension  
+**Included:** Yes (with Ollama Cloud subscription)
+
+**Strengths:**
+
+- Ultra-long context up to 1M tokens (longest of all models)
+- 397B total parameters / 17B active (MoE with 512 experts)
+- 201 languages supported
+- Multimodal (vision, text, video)
+- Thinking mode with reasoning output
+
+**Use for:**
+
+- Full codebase analysis (hundreds of files in one pass)
+- Massive document summarization (books, reports)
+- Long log analysis (months of data)
+- Multi-document comparison (hundreds of docs)
+- Translation of long texts
+
 ---
 
-**Alternative:** These models can also be accessed directly via their providers' APIs (Zhipu AI for GLM, Moonshot AI for Kimi, Google for Gemma) with pay-per-token pricing, but Ollama Cloud provides a unified interface with subscription billing.
+**Alternative:** These models can also be accessed directly via their providers' APIs (Zhipu AI for GLM, Moonshot AI for Kimi, Google for Gemma, Alibaba Cloud for Qwen) with pay-per-token pricing, but Ollama Cloud provides a unified interface with subscription billing.

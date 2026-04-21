@@ -25,13 +25,14 @@ Execute tasks in parallel with multiple Ollama model workers.
 
 ## Worker Specification
 
-Format: `N:model` where N = worker count, model = kimi|glm|gemma
+Format: `N:model` where N = worker count, model = kimi|glm|gemma|qwen
 
-| Model Short | Full Name        | Strengths             |
-| ----------- | ---------------- | --------------------- |
-| kimi        | kimi-k2.6:cloud  | Reasoning, multimodal |
-| glm         | glm-5.1:cloud    | Coding, architecture  |
-| gemma       | gemma4:31b-cloud | Refactoring, OCR      |
+| Model Short | Full Name          | Strengths               |
+| ----------- | ------------------ | ----------------------- |
+| kimi        | kimi-k2.6:cloud    | Reasoning, multimodal   |
+| glm         | glm-5.1:cloud      | Coding, architecture    |
+| gemma       | gemma4:31b-cloud   | Refactoring, OCR        |
+| qwen        | qwen3.5:397b-cloud | Long context (1M), docs |
 
 ## Task Templates
 
@@ -91,6 +92,9 @@ Use `--detach` to run the team in the background via the daemon:
 
 # Background execution for long tasks
 /ollama:team 10:kimi "analyze entire codebase" --detach
+
+# Distribute: Process massive documents with Qwen
+/ollama:team 3:qwen "summarize document-{i}.pdf" --detach
 ```
 
 ## Execution

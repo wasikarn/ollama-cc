@@ -153,11 +153,12 @@ Check jobs and daemon status:
 
 All models are included with your Ollama Cloud subscription.
 
-| Model              | Context | Best For                           | Included |
-| ------------------ | ------- | ---------------------------------- | -------- |
-| `kimi-k2.6:cloud`  | 256K    | Multimodal, UI→code, reasoning     | Yes      |
-| `glm-5.1:cloud`    | ~200K   | Coding SOTA, agentic debugging     | Yes      |
-| `gemma4:31b-cloud` | 256K    | OCR, document parsing, refactoring | Yes      |
+| Model                | Context | Best For                                             | Included |
+| -------------------- | ------- | ---------------------------------------------------- | -------- |
+| `kimi-k2.6:cloud`    | 256K    | Multimodal, UI→code, reasoning                       | Yes      |
+| `glm-5.1:cloud`      | ~200K   | Coding SOTA, agentic debugging                       | Yes      |
+| `gemma4:31b-cloud`   | 256K    | OCR, document parsing, refactoring                   | Yes      |
+| `qwen3.5:397b-cloud` | 1M/262K | Ultra-long context, massive documents, 201 languages | Yes      |
 
 **Note:** Ollama Cloud uses subscription pricing (Free/Pro/Max tiers). Usage is measured by GPU time, not tokens. See [Ollama Cloud Pricing](https://ollama.com/cloud) for details.
 

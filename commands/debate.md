@@ -1,7 +1,7 @@
 ---
 name: debate
 version: "1.0.0"
-description: Run multi-model debate mode. Executes prompt on all 3 models (kimi, glm, gemma) in parallel and synthesizes consensus.
+description: Run multi-model debate mode. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus.
 argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach]
 ---
 
@@ -59,10 +59,11 @@ Use `--detach` to run the debate in the background via the daemon:
 
 ## Flow
 
-1. Run prompt on all 3 models simultaneously:
+1. Run prompt on all 4 models simultaneously:
    - **kimi-k2.6:cloud** - Reasoning, debugging perspective
    - **glm-5.1:cloud** - Architecture, systems perspective
    - **gemma4:31b-cloud** - Implementation, refactoring perspective
+   - **qwen3.5:397b-cloud** - Long-context, document analysis perspective
 
 2. Calculate agreement scores between all pairs
 

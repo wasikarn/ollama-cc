@@ -31,6 +31,14 @@ export const MODELS = {
     reason: 'Native OCR, Apache 2.0, function calling',
     color: '\x1b[35m', // Magenta
     expertise: 'Document OCR, code refactoring'
+  },
+  'qwen': {
+    name: 'qwen3.5:397b-cloud',
+    context: '1M/262K',
+    bestFor: ['long-context', 'codebase', 'massive-doc', 'analysis'],
+    reason: '1M context, ultra-long document processing',
+    color: '\x1b[33m', // Yellow
+    expertise: 'Massive document analysis, full codebase reading'
   }
 };
 
@@ -51,7 +59,9 @@ export const KEYWORD_MAP = [
   { patterns: ['ocr', 'document', 'parse', 'extract.*text', 'pdf', 'scan', 'image.*text'], model: 'gemma4', category: 'Document/OCR' },
   { patterns: ['refactor', 'transform', 'rename', 'migrate', 'mechanical'], model: 'gemma4', category: 'Refactoring' },
   { patterns: ['ui', 'visual', 'screenshot', 'image', 'multimodal', 'from.*design'], model: 'kimi', category: 'Visual/Multimodal' },
-  { patterns: ['review', 'analyze', 'check', 'audit'], model: 'glm-5.1', category: 'Analysis' }
+  { patterns: ['review', 'analyze', 'check', 'audit'], model: 'glm-5.1', category: 'Analysis' },
+  { patterns: ['long.*context', 'codebase', 'entire.*repo', 'all.*files', 'massive.*doc', 'book', 'logs.*months', 'ultra.*long'], model: 'qwen', category: 'Long Context' },
+  { patterns: ['summarize.*long', 'analyze.*hundreds', 'compare.*documents', 'translation.*novel'], model: 'qwen', category: 'Massive Document' }
 ];
 
 export const COMPILED_KEYWORD_MAP = KEYWORD_MAP.map(mapping => ({
@@ -125,6 +135,18 @@ export const ROLES = {
     preferredModel: 'glm-5.1',
     traits: ['thorough', 'edge-case-aware', 'systematic'],
     systemPrompt: 'You are a testing expert. Cover edge cases and failure modes.'
+  },
+  analyst: {
+    description: 'Large-scale document and codebase analysis specialist',
+    preferredModel: 'qwen',
+    traits: ['comprehensive', 'pattern-recognition', 'synthesizing'],
+    systemPrompt: 'You are an analysis expert for massive documents and codebases. Process and synthesize vast amounts of information.'
+  },
+  processor: {
+    description: 'Ultra-long document processing specialist',
+    preferredModel: 'qwen',
+    traits: ['thorough', 'structured', 'meticulous'],
+    systemPrompt: 'You are a document processing expert for extremely long texts. Maintain coherence across massive contexts.'
   },
   generalist: {
     description: 'General purpose assistant',

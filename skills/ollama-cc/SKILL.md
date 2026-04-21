@@ -46,6 +46,7 @@ Or ask Claude to run ollama commands for you.
 ./ollama-wrapper.sh kimi "prompt"          # Kimi K2.6 (multimodal)
 ./ollama-wrapper.sh glm "prompt"           # GLM-5.1 (coding, agentic)
 ./ollama-wrapper.sh gemma "prompt"        # Gemma 4 (OCR, refactoring)
+./ollama-wrapper.sh qwen "prompt"         # Qwen 3.5 397B (1M context, long docs)
 
 # Check status
 ./ollama-wrapper.sh status
@@ -55,14 +56,16 @@ Or ask Claude to run ollama commands for you.
 
 Auto-detects the best model based on keywords in your prompt:
 
-| Keywords                              | Routes To     | Why                                   |
-| ------------------------------------- | ------------- | ------------------------------------- |
-| `debug`, `error`, `fix`, `trace`      | **GLM-5.1**   | SWE-Bench Pro SOTA, agentic debugging |
-| `design`, `architecture`, `system`    | **GLM-5.1**   | 744B MoE, 8-hour agent support        |
-| `OCR`, `document`, `parse`, `PDF`     | **Gemma 4**   | Native OCR, 256K context              |
-| `UI`, `visual`, `screenshot`, `image` | **Kimi K2.6** | Cross-modal, UI→code                  |
-| `refactor`, `transform`, `rename`     | **Gemma 4**   | Fast, native function calling         |
-| _(default)_                           | **Kimi K2.6** | Balanced, 256K context                |
+| Keywords                                        | Routes To     | Why                                   |
+| ----------------------------------------------- | ------------- | ------------------------------------- |
+| `debug`, `error`, `fix`, `trace`                | **GLM-5.1**   | SWE-Bench Pro SOTA, agentic debugging |
+| `design`, `architecture`, `system`              | **GLM-5.1**   | 744B MoE, 8-hour agent support        |
+| `OCR`, `document`, `parse`, `PDF`               | **Gemma 4**   | Native OCR, 256K context              |
+| `UI`, `visual`, `screenshot`, `image`           | **Kimi K2.6** | Cross-modal, UI→code                  |
+| `refactor`, `transform`, `rename`               | **Gemma 4**   | Fast, native function calling         |
+| `long context`, `codebase`, `analyze all files` | **Qwen 3.5**  | 1M context, full repo analysis        |
+| `massive document`, `summarize book`, `logs`    | **Qwen 3.5**  | Ultra-long context up to 1M tokens    |
+| _(default)_                                     | **Kimi K2.6** | Balanced, 256K context                |
 
 **Usage:**
 
@@ -80,6 +83,7 @@ Auto-detects the best model based on keywords in your prompt:
 | `kimi "<p>"`            | Kimi K2.6 (:cloud)                       |
 | `glm "<p>"`             | GLM-5.1 (:cloud)                         |
 | `gemma "<p>"`           | Gemma 4 31B (:cloud)                     |
+| `qwen "<p>"`            | Qwen 3.5 397B (:cloud)                   |
 | `run "<p>"`             | Default model execution                  |
 | `code "<p>"`            | Code generation (temp=0.1)               |
 | `review <file> [focus]` | Code review                              |
@@ -112,11 +116,12 @@ Auto-detects the best model based on keywords in your prompt:
 
 See [references/models.md](references/models.md) for detailed specs and pricing.
 
-| Model              | Context  | Best For              | Ollama Cloud |
-| ------------------ | -------- | --------------------- | ------------ |
-| `kimi-k2.6:cloud`  | **256K** | Multimodal, UI→code   | Included     |
-| `glm-5.1:cloud`    | ~200K    | Coding, agentic tasks | Included     |
-| `gemma4:31b-cloud` | **256K** | OCR, refactoring      | Included     |
+| Model                | Context     | Best For                                        | Ollama Cloud |
+| -------------------- | ----------- | ----------------------------------------------- | ------------ |
+| `kimi-k2.6:cloud`    | **256K**    | Multimodal, UI→code                             | Included     |
+| `glm-5.1:cloud`      | ~200K       | Coding, agentic tasks                           | Included     |
+| `gemma4:31b-cloud`   | **256K**    | OCR, refactoring                                | Included     |
+| `qwen3.5:397b-cloud` | **1M/262K** | Ultra-long context, massive documents, codebase | Included     |
 
 **Note:** All models are included with your Ollama Cloud subscription (Free/Pro/Max tiers). Usage is measured by GPU time, not tokens.
 
@@ -180,11 +185,12 @@ export OLLAMA_MAX_LOADED_MODELS=2
 
 Use these for **direct single-model access** when you already know which model you need:
 
-| Skill         | Model         | Best For                         | Ollama Cloud |
-| ------------- | ------------- | -------------------------------- | ------------ |
-| **ask-kimi**  | **Kimi K2.6** | Multimodal, UI→code, debugging   | Included     |
-| **ask-glm**   | **GLM-5.1**   | Coding, architecture, agentic    | Included     |
-| **ask-gemma** | **Gemma 4**   | Refactoring, OCR, cost-efficient | Included     |
+| Skill         | Model         | Best For                              | Ollama Cloud |
+| ------------- | ------------- | ------------------------------------- | ------------ |
+| **ask-kimi**  | **Kimi K2.6** | Multimodal, UI→code, debugging        | Included     |
+| **ask-glm**   | **GLM-5.1**   | Coding, architecture, agentic         | Included     |
+| **ask-gemma** | **Gemma 4**   | Refactoring, OCR, cost-efficient      | Included     |
+| **ask-qwen**  | **Qwen 3.5**  | Ultra-long context, massive documents | Included     |
 
 **When to use which:**
 
@@ -199,3 +205,4 @@ Use these for **direct single-model access** when you already know which model y
 - [Kimi K2.6](https://ollama.com/library/kimi-k2.6)
 - [GLM-5.1](https://ollama.com/library/glm-5.1)
 - [Gemma 4](https://ollama.com/library/gemma4)
+- [Qwen 3.5](https://ollama.com/library/qwen3.5)

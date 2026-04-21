@@ -43,7 +43,9 @@ export function resolveModelName(shortName) {
     'glm-5': 'glm-5.1:cloud',
     'glm-5.1': 'glm-5.1:cloud',
     'gemma': 'gemma4:31b-cloud',
-    'gemma4': 'gemma4:31b-cloud'
+    'gemma4': 'gemma4:31b-cloud',
+    'qwen': 'qwen3.5:397b-cloud',
+    'qwen3.5': 'qwen3.5:397b-cloud'
   };
   return modelMap[shortName] || `${shortName}:cloud`;
 }

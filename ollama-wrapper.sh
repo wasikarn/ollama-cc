@@ -17,11 +17,12 @@ Commands:
   kimi <prompt>        Direct access to Kimi K2.6
   glm <prompt>         Direct access to GLM-5.1
   gemma <prompt>       Direct access to Gemma 4
+  qwen <prompt>        Direct access to Qwen 3.5 397B (1M context)
   status [options]     Check jobs and daemon status
   help                 Show this help message
 
 Smart Options:
-  --model <name>       Override model (kimi, glm-5.1, gemma4)
+  --model <name>       Override model (kimi, glm-5.1, gemma4, qwen)
   --explain            Show routing decision
   --show-intent        Show intent classification
   --verbose            Detailed output
@@ -106,6 +107,10 @@ case "${1:-}" in
     gemma)
         shift
         node "$SCRIPT_DIR/scripts/smart.mjs" --model gemma "$@"
+        ;;
+    qwen)
+        shift
+        node "$SCRIPT_DIR/scripts/smart.mjs" --model qwen "$@"
         ;;
     status)
         shift
