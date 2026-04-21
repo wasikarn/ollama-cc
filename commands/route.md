@@ -1,8 +1,8 @@
 ---
 name: route
-version: "1.0.0"
+version: "1.1.0"
 description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, reasoning, etc.) and routes to kimi-k2.6, glm-5.1, gemma4, or qwen3.5 with structured XML prompts.
-argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured]
+argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured] [--dry-run] [--budget] [--model <name>]
 ---
 
 # /ollama:route
@@ -25,6 +25,8 @@ Auto-route prompts to the best Ollama model using intelligent intent classificat
 | `--show-intent`   | Display intent classification details        |
 | `--verbose`       | Include full classification data             |
 | `--no-structured` | Disable XML structured prompts               |
+| `--dry-run`       | Show routing decision without executing      |
+| `--budget`        | Show token estimate without executing        |
 | `--model <name>`  | Override model selection                     |
 
 ## Intent-Based Model Routing
@@ -68,6 +70,12 @@ The router uses an intent classification system to determine the best model:
 
 # Model override
 /ollama:route --model kimi "implement a quick sort"
+
+# Dry run — show routing decision without executing
+/ollama:route --dry-run "refactor this codebase"
+
+# Budget — show token estimate without executing
+/ollama:route --budget "design a payment gateway"
 ```
 
 ## Intent Classification Output

@@ -10,7 +10,7 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { resolveModelName, withRetry } from './lib/utils.mjs';
-import { createJob, markJobCompleted, markJobFailed } from './lib/job-store.mjs';
+import { createJob } from './lib/job-store.mjs';
 import { submitToDaemon } from './lib/daemon.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, blue: BLUE, cyan: CYAN, magenta: MAGENTA } = COLORS;

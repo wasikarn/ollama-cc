@@ -154,11 +154,19 @@ async function runOllamaWithRetry(model, prompt, options = {}) {
 }
 
 /**
+ * Estimate token count from prompt text
+ * Rough approximation: ~4 chars per token
+ */
+function estimateTokens(text) {
+  return Math.ceil(text.length / 4);
+}
+
+/**
  * Main smart router function
  */
 export async function smartRouter(prompt, options = {}) {
   if (!prompt) {
-    log('error', 'No prompt provided. Usage: route "<prompt>" [--explain] [--show-intent]');
+    log('error', 'No prompt provided. Usage: route "<prompt>" [--explain] [--show-intent] [--dry-run] [--budget]');
     process.exit(1);
   }
 
@@ -181,7 +189,10 @@ export async function smartRouter(prompt, options = {}) {
   }
 
   // Show explanation if requested
-  if (options.explain) {
+  if (options.explain || options.dryRun || options.budget) {
+    const estimatedTokens = estimateTokens(prompt);
+    const estimatedOutput = Math.round(estimatedTokens * 1.5);
+
     log('info', 'Smart Router Analysis:');
     console.log(`  Prompt: ${prompt.slice(0, 60)}...`);
     console.log(`  Intent: ${detection.intent}`);
@@ -194,7 +205,20 @@ export async function smartRouter(prompt, options = {}) {
     if (detection.alternatives && detection.alternatives.length > 0) {
       console.log(`  Alternatives: ${detection.alternatives.map(a => a.intent).join(', ')}`);
     }
+    console.log(`  Est. tokens: ~${estimatedTokens} in / ~${estimatedOutput} out`);
     console.log('');
+  }
+
+  // Dry run: show analysis and exit without executing
+  if (options.dryRun) {
+    log('info', 'Dry run — no execution. Remove --dry-run to execute.');
+    return;
+  }
+
+  // Budget-only: show analysis and exit without executing
+  if (options.budget && !options.dryRun) {
+    log('info', 'Budget estimate shown. Remove --budget to execute.');
+    return;
   }
 
   log('model', `Smart route (${detection.intent.toLowerCase()}, ${(detection.confidence * 100).toFixed(0)}%) → ${detection.model}`);
@@ -213,38 +237,49 @@ export async function smartRouter(prompt, options = {}) {
 
 // CLI entry point
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const args = process.argv.slice(2);
+  (async () => {
+    const args = process.argv.slice(2);
 
-  // Parse flags
-  const explainFlag = args.includes('--explain');
-  const showIntentFlag = args.includes('--show-intent');
-  const verboseFlag = args.includes('--verbose');
-  const noStructuredFlag = args.includes('--no-structured');
+    // Parse flags
+    const explainFlag = args.includes('--explain');
+    const showIntentFlag = args.includes('--show-intent');
+    const verboseFlag = args.includes('--verbose');
+    const noStructuredFlag = args.includes('--no-structured');
+    const dryRunFlag = args.includes('--dry-run');
+    const budgetFlag = args.includes('--budget');
 
-  // Parse --model flag
-  const modelFlagIndex = args.findIndex(a => a === '--model');
-  let modelOverride = null;
-  if (modelFlagIndex >= 0 && modelFlagIndex + 1 < args.length) {
-    modelOverride = resolveModelName(args[modelFlagIndex + 1]);
-    args.splice(modelFlagIndex, 2);
-  }
+    // Parse --model flag
+    const modelFlagIndex = args.findIndex(a => a === '--model');
+    let modelOverride = null;
+    if (modelFlagIndex >= 0 && modelFlagIndex + 1 < args.length) {
+      modelOverride = resolveModelName(args[modelFlagIndex + 1]);
+      args.splice(modelFlagIndex, 2);
+    }
 
-  // Find prompt (first positional arg, not a flag)
-  const promptIndex = args.findIndex(a => !a.startsWith('--'));
-  const prompt = promptIndex >= 0 ? args[promptIndex] : null;
+    // Find prompt (first positional arg, not a flag)
+    const promptIndex = args.findIndex(a => !a.startsWith('--'));
+    const prompt = promptIndex >= 0 ? args[promptIndex] : null;
 
-  if (modelOverride) {
-    log('model', `Model override: ${modelOverride}`);
-    runOllamaWithRetry(modelOverride, prompt, { structured: !noStructuredFlag }).catch(err => {
-      log('error', err.message);
-      process.exit(1);
-    });
-  } else {
-    smartRouter(prompt, {
-      explain: explainFlag,
-      showIntent: showIntentFlag,
-      verbose: verboseFlag,
-      structured: !noStructuredFlag
-    });
-  }
+    if (modelOverride) {
+      log('model', `Model override: ${modelOverride}`);
+      if (dryRunFlag || budgetFlag) {
+        const estimatedTokens = Math.ceil((prompt || '').length / 4);
+        log('info', `Dry run: ${modelOverride} | Est. tokens: ~${estimatedTokens}`);
+        return;
+      }
+      await runOllamaWithRetry(modelOverride, prompt, { structured: !noStructuredFlag }).catch(err => {
+        log('error', err.message);
+        process.exit(1);
+      });
+    } else {
+      await smartRouter(prompt, {
+        explain: explainFlag,
+        showIntent: showIntentFlag,
+        verbose: verboseFlag,
+        structured: !noStructuredFlag,
+        dryRun: dryRunFlag,
+        budget: budgetFlag
+      });
+    }
+  })();
 }
