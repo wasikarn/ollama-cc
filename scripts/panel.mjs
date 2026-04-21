@@ -259,6 +259,17 @@ export async function debateMode(prompt, options = {}) {
   const tier = options.tier || 'standard';
   const format = options.format || 'text';
 
+  // Determine which models to run (default: all)
+  let activeModels = Object.entries(MODELS);
+  if (options.models) {
+    const selected = options.models.split(',').map(s => s.trim());
+    activeModels = activeModels.filter(([key]) => selected.includes(key));
+    if (activeModels.length === 0) {
+      console.error(`Error: No valid models selected. Available: ${Object.keys(MODELS).join(', ')}`);
+      process.exit(1);
+    }
+  }
+
   // Handle detached mode — ephemeral one-shot background process
   if (options.detach) {
     const result = await spawnBackground('panel', {
@@ -276,11 +287,11 @@ export async function debateMode(prompt, options = {}) {
     console.log(`${BLUE}  Quality Tier: ${tier.toUpperCase()}${RESET}`);
     console.log(`${BLUE}═══════════════════════════════════════════════════${RESET}\n`);
 
-    console.log(`${YELLOW}Running 3 models in parallel...${RESET}\n`);
+    console.log(`${YELLOW}Running ${activeModels.length} model${activeModels.length > 1 ? 's' : ''} in parallel...${RESET}\n`);
   }
 
   const startTime = Date.now();
-  const promises = Object.entries(MODELS).map(([key, config]) => {
+  const promises = activeModels.map(([key, config]) => {
     if (format !== 'json') {
       process.stdout.write(`${config.color}  ▶ ${config.name}${RESET} `);
     }
@@ -372,19 +383,23 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const formatIndex = args.indexOf('--format');
   const format = formatIndex >= 0 ? args[formatIndex + 1] : 'text';
 
+  const modelsIndex = args.indexOf('--models');
+  const models = modelsIndex >= 0 ? args[modelsIndex + 1] : null;
+
   const detach = args.includes('--detach');
 
   // Filter out flags and their values from args
   const filteredArgs = args.filter((_, i) => {
     if (i === tierIndex || i === tierIndex + 1) return false;
     if (i === formatIndex || i === formatIndex + 1) return false;
+    if (i === modelsIndex || i === modelsIndex + 1) return false;
     if (args[i] === '--detach') return false;
     return true;
   });
 
   const prompt = filteredArgs.join(' ');
 
-  debateMode(prompt, { tier, format, detach }).catch(err => {
+  debateMode(prompt, { tier, format, models, detach }).catch(err => {
     console.error('Error:', err.message);
     process.exit(1);
   });

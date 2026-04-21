@@ -1,13 +1,13 @@
 ---
 name: panel
-version: "1.0.0"
-description: Run multi-model panel discussion. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus.
-argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach]
+version: "1.1.0"
+description: Run multi-model panel discussion. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus. Use --models to select a subset.
+argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach] [--models <model1,model2>]
 ---
 
 # /ollama:panel
 
-Run multi-model consensus with 3 Ollama models executing in parallel.
+Run multi-model consensus with 4 Ollama models executing in parallel.
 
 ## Usage
 
@@ -17,7 +17,17 @@ Run multi-model consensus with 3 Ollama models executing in parallel.
 /ollama:panel --tier deep "Architecture trade-offs for scale"
 /ollama:panel --format json "Review this code"
 /ollama:panel --detach "Long running analysis"
+/ollama:panel --models glm,qwen "Math problem analysis"
 ```
+
+## Flags
+
+| Flag              | Description                                            |
+| ----------------- | ------------------------------------------------------ |
+| `--tier <tier>`   | Quality tier: fast, standard, deep (default: standard) |
+| `--format json`   | JSON output for machine parsing                        |
+| `--detach`        | Run in background (ephemeral one-shot process)         |
+| `--models <list>` | Comma-separated subset of models to run                |
 
 ## Quality Tiers
 
@@ -27,12 +37,29 @@ Run multi-model consensus with 3 Ollama models executing in parallel.
 | standard | 70-90%              | Shows disagreements     |
 | deep     | <70%                | Full analysis + verdict |
 
+## Model Selection
+
+Run all 4 models by default, or select a subset with `--models`:
+
+```bash
+# Run all 4 models (default)
+/ollama:panel "Should we use microservices?"
+
+# Run only 2 models
+/ollama:panel --models glm,gemma "Quick code review"
+
+# Run only reasoning models
+/ollama:panel --models glm,qwen "Complex algorithm design"
+```
+
+**Available models:** `kimi`, `glm`, `gemma`, `qwen`
+
 ## Output Formats
 
-| Format | Description                                                |
-| ------ | ---------------------------------------------------------- |
-| text   | Human-readable output with colors and formatting (default) |
-| json   | Machine-readable JSON with structured results              |
+| Format | Description                                 |
+| ------ | ------------------------------------------- |
+| text   | Human-readable output with colors (default) |
+| json   | Machine-readable JSON                       |
 
 ### JSON Output Schema
 
@@ -49,7 +76,7 @@ Run multi-model consensus with 3 Ollama models executing in parallel.
 
 ## Background Execution
 
-Use `--detach` to run the panel in the background via the daemon:
+Use `--detach` to run the panel in the background:
 
 ```bash
 /ollama:panel --detach "Long running analysis"
@@ -59,7 +86,7 @@ Use `--detach` to run the panel in the background via the daemon:
 
 ## Flow
 
-1. Run prompt on all 4 models simultaneously:
+1. Run prompt on selected models simultaneously:
    - **kimi-k2.6:cloud** - Reasoning, debugging perspective
    - **glm-5.1:cloud** - Architecture, systems perspective
    - **gemma4:31b-cloud** - Implementation, refactoring perspective
@@ -72,7 +99,7 @@ Use `--detach` to run the panel in the background via the daemon:
 ## Examples
 
 ```bash
-# Standard panel (default)
+# Standard panel (default — all 4 models)
 /ollama:panel "Should we use microservices or monolith?"
 
 # Quick consensus check
@@ -86,10 +113,13 @@ Use `--detach` to run the panel in the background via the daemon:
 
 # Background execution
 /ollama:panel --detach "Analyze codebase architecture"
+
+# Subset of models
+/ollama:panel --models glm,qwen "Solve this math problem"
 ```
 
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}}
+${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if models}}--models {{models}}{{/if}} {{#if detach}}--detach{{/if}}
 ```
