@@ -12,6 +12,7 @@ import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { resolveModelName, withRetry } from './lib/utils.mjs';
 import { createJob } from './lib/job-store.mjs';
 import { spawnBackground } from './lib/background.mjs';
+import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, blue: BLUE, cyan: CYAN, magenta: MAGENTA } = COLORS;
 
@@ -64,11 +65,27 @@ function generateSubtasks(template, count) {
 /**
  * Run a single worker
  */
-function runWorker(workerId, modelName, prompt, color) {
+function runWorker(workerId, modelName, prompt, color, useCache = true) {
   return new Promise((resolve, reject) => {
-    const startTime = Date.now();
-
     process.stdout.write(`${color}[${workerId}]${RESET} `);
+
+    // Check cache first
+    if (useCache) {
+      const cached = getCachedResponse(modelName, prompt);
+      if (cached) {
+        process.stdout.write(`${color}✓${RESET} CACHED (${Math.round(cached.cacheAge / 1000)}s ago)\n`);
+        resolve({
+          workerId,
+          output: cached.output,
+          duration: 0,
+          status: 'completed',
+          cached: true
+        });
+        return;
+      }
+    }
+
+    const startTime = Date.now();
 
     const child = spawn('ollama', ['run', modelName, prompt, '--nowordwrap'], {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -93,12 +110,16 @@ function runWorker(workerId, modelName, prompt, color) {
       const duration = Date.now() - startTime;
       if (code === 0) {
         process.stdout.write(`${color}✓${RESET} (${duration}ms)\n`);
-        resolve({
+        const result = {
           workerId,
           output: output.trim(),
           duration,
           status: 'completed'
-        });
+        };
+        if (useCache) {
+          setCachedResponse(modelName, prompt, result);
+        }
+        resolve(result);
       } else {
         process.stdout.write(`${color}✗${RESET} ERROR\n`);
         reject(new Error(`Worker ${workerId} failed: ${errorOutput}`));
@@ -300,10 +321,11 @@ export async function teamMode(countOrSpec, model, task, options = {}) {
     console.log(`${YELLOW}Spawning workers...${RESET}\n`);
   }
 
+  const useCache = options.cache !== false;
   const promises = subtasks.map((s) => {
     const color = MODEL_COLORS[spec.modelKey] || CYAN;
     return withRetry(
-      () => runWorker(s.id, spec.modelName, s.task, color),
+      () => runWorker(s.id, spec.modelName, s.task, color, useCache),
       {
         maxRetries: 2,
         baseDelay: 1000,
@@ -400,12 +422,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const ensembleFlag = args.includes('--ensemble');
   const detachFlag = args.includes('--detach');
+  const cacheFlag = !args.includes('--no-cache');
 
   const formatIndex = args.indexOf('--format');
   const format = formatIndex >= 0 ? args[formatIndex + 1] : 'text';
 
   const filteredArgs = args.filter((a, i) => {
-    if (a === '--ensemble' || a === '--detach') return false;
+    if (a === '--ensemble' || a === '--detach' || a === '--no-cache') return false;
     if (i === formatIndex || i === formatIndex + 1) return false;
     return true;
   });
@@ -413,5 +436,5 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const teamSpec = filteredArgs[0];
   const task = filteredArgs.slice(1).join(' ');
 
-  teamMode(teamSpec, null, task, { ensemble: ensembleFlag, format, detach: detachFlag });
+  teamMode(teamSpec, null, task, { ensemble: ensembleFlag, format, detach: detachFlag, cache: cacheFlag });
 }

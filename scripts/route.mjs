@@ -9,6 +9,7 @@ import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.m
 import { detectModelFromIntent, detectComplexity } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
 import { log, withRetry, resolveModelName } from './lib/utils.mjs';
+import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
 
 /**
  * Detect best model using intent-based classification
@@ -83,6 +84,7 @@ function formatIntentClassification(classification) {
 function runOllama(model, prompt, options = {}) {
   return new Promise((resolve, reject) => {
     const useStructured = options.structured !== false;
+    const useCache = options.cache !== false;
 
     // Build structured prompt if enabled
     let finalPrompt = prompt;
@@ -96,6 +98,16 @@ function runOllama(model, prompt, options = {}) {
         log('warn', `Failed to build structured prompt: ${err.message}`);
         // Fall back to minimal
         finalPrompt = createMinimalPrompt(prompt, model);
+      }
+    }
+
+    // Check cache first
+    if (useCache) {
+      const cached = getCachedResponse(model, finalPrompt);
+      if (cached) {
+        process.stdout.write(cached.output);
+        resolve(cached.output);
+        return;
       }
     }
 
@@ -125,6 +137,9 @@ function runOllama(model, prompt, options = {}) {
 
     child.on('close', (code) => {
       if (code === 0) {
+        if (useCache) {
+          setCachedResponse(model, finalPrompt, { output });
+        }
         resolve(output);
       } else {
         reject(new Error(`Process exited with code ${code}`));
@@ -233,7 +248,8 @@ export async function smartRouter(prompt, options = {}) {
     await runOllamaWithRetry(detection.model, prompt, {
       structured: options.structured,
       classification: detection,
-      nowordwrap: options.nowordwrap
+      nowordwrap: options.nowordwrap,
+      cache: options.cache
     });
   } catch (error) {
     log('error', error.message);
@@ -254,6 +270,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const dryRunFlag = args.includes('--dry-run');
     const budgetFlag = args.includes('--budget');
     const verticalFlag = args.includes('--vertical');
+    const cacheFlag = !args.includes('--no-cache');
 
     // Parse --model flag
     const modelFlagIndex = args.findIndex(a => a === '--model');
@@ -274,7 +291,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         log('info', `Dry run: ${modelOverride} | Est. tokens: ~${estimatedTokens}`);
         return;
       }
-      await runOllamaWithRetry(modelOverride, prompt, { structured: !noStructuredFlag }).catch(err => {
+      await runOllamaWithRetry(modelOverride, prompt, { structured: !noStructuredFlag, cache: cacheFlag }).catch(err => {
         log('error', err.message);
         process.exit(1);
       });
@@ -286,7 +303,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         structured: !noStructuredFlag,
         dryRun: dryRunFlag,
         budget: budgetFlag,
-        vertical: verticalFlag
+        vertical: verticalFlag,
+        cache: cacheFlag
       });
     }
   })();

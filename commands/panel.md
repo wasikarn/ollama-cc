@@ -2,7 +2,7 @@
 name: panel
 version: "1.1.0"
 description: Run multi-model panel discussion. Executes prompt on all 4 models (kimi, glm, gemma, qwen) in parallel and synthesizes consensus. Use --models to select a subset.
-argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach] [--synthesize] [--models <model1,model2>]
+argument-hint: <prompt> [--tier fast|standard|deep] [--format json] [--detach] [--synthesize] [--no-cache] [--models <model1,model2>]
 ---
 
 # /ollama:panel
@@ -28,6 +28,7 @@ Run multi-model consensus with 4 Ollama models executing in parallel.
 | `--format json`   | JSON output for machine parsing                           |
 | `--detach`        | Run in background (ephemeral one-shot process)            |
 | `--synthesize`    | Use LLM to synthesize model outputs into unified response |
+| `--no-cache`      | Disable response caching                                  |
 | `--models <list>` | Comma-separated subset of models to run                   |
 
 ## Quality Tiers
@@ -130,5 +131,5 @@ Use `--detach` to run the panel in the background:
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if models}}--models {{models}}{{/if}} {{#if detach}}--detach{{/if}} {{#if synthesize}}--synthesize{{/if}}
+${CLAUDE_PLUGIN_ROOT}/scripts/panel.mjs "{{prompt}}" {{#if tier}}--tier {{tier}}{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if models}}--models {{models}}{{/if}} {{#if detach}}--detach{{/if}} {{#if synthesize}}--synthesize{{/if}} {{#if no-cache}}--no-cache{{/if}}
 ```

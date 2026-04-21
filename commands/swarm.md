@@ -2,7 +2,7 @@
 name: swarm
 version: "1.0.0"
 description: Run parallel swarm execution with N workers. Supports distributed tasks or ensemble voting mode.
-argument-hint: <N:model> "<task>" [--ensemble] [--format json] [--detach]
+argument-hint: <N:model> "<task>" [--ensemble] [--format json] [--detach] [--no-cache]
 ---
 
 # /ollama:swarm
@@ -100,5 +100,5 @@ Use `--detach` to run the swarm in the background via the daemon:
 ## Execution
 
 ```bash
-${CLAUDE_PLUGIN_ROOT}/scripts/swarm.mjs "{{spec}}" "{{task}}" {{#if ensemble}}--ensemble{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}}
+${CLAUDE_PLUGIN_ROOT}/scripts/swarm.mjs "{{spec}}" "{{task}}" {{#if ensemble}}--ensemble{{/if}} {{#if format}}--format {{format}}{{/if}} {{#if detach}}--detach{{/if}} {{#if no-cache}}--no-cache{{/if}}
 ```

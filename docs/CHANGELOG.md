@@ -1,5 +1,22 @@
 # Changelog
 
+## v0.2.5 — Response Caching
+
+### Added
+
+- **File-based response cache** (`scripts/lib/cache.mjs`) with SHA-256 key hashing
+  - Cache stored in `~/.ollama-cc/cache/` with 1-hour default TTL
+  - Cache key = `sha256(model + ":" + prompt).slice(0,16)`
+  - `getCachedResponse()`, `setCachedResponse()`, `clearCache()`, `getCacheStats()`
+- **`--no-cache` flag** on `route`, `panel`, and `swarm` commands
+  - Disables reading from and writing to cache
+  - Default: caching enabled
+- **Cache hit indicators** in terminal output
+  - Panel: `✓ CACHED (30s ago)`
+  - Swarm: `✓ CACHED (30s ago)`
+  - Route: streams cached output directly
+- **8 cache tests** covering store/retrieve, TTL expiry, model isolation, empty output, stats
+
 ## v0.2.4 — Graceful Model Failures + Cost Visibility
 
 ### Added

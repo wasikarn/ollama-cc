@@ -28,6 +28,7 @@ Auto-route prompts to the best Ollama model using intelligent intent classificat
 | `--dry-run`       | Show routing decision without executing      |
 | `--budget`        | Show token estimate without executing        |
 | `--vertical`      | Enable complexity-based vertical routing     |
+| `--no-cache`      | Disable response caching                     |
 | `--model <name>`  | Override model selection                     |
 
 ## Intent-Based Model Routing

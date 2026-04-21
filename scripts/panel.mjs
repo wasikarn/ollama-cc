@@ -11,14 +11,32 @@ import { homedir } from 'os';
 import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { withRetry } from './lib/utils.mjs';
 import { spawnBackground } from './lib/background.mjs';
+import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
 
 const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
 
 /**
  * Run a single model and capture output
  */
-function runModel(modelKey, modelConfig, prompt) {
+function runModel(modelKey, modelConfig, prompt, useCache = true) {
   return new Promise((resolve, reject) => {
+    // Check cache first
+    if (useCache) {
+      const cached = getCachedResponse(modelConfig.name, prompt);
+      if (cached) {
+        resolve({
+          model: modelKey,
+          modelName: modelConfig.name,
+          output: cached.output,
+          duration: 0,
+          expertise: modelConfig.expertise,
+          cached: true,
+          cacheAge: cached.cacheAge
+        });
+        return;
+      }
+    }
+
     const startTime = Date.now();
     const child = spawn('ollama', ['run', modelConfig.name, prompt, '--nowordwrap'], {
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -42,13 +60,17 @@ function runModel(modelKey, modelConfig, prompt) {
     child.on('close', (code) => {
       const duration = Date.now() - startTime;
       if (code === 0) {
-        resolve({
+        const result = {
           model: modelKey,
           modelName: modelConfig.name,
           output: output.trim(),
           duration,
           expertise: modelConfig.expertise
-        });
+        };
+        if (useCache) {
+          setCachedResponse(modelConfig.name, prompt, result);
+        }
+        resolve(result);
       } else {
         reject(new Error(`${modelConfig.name} exited with code ${code}: ${errorOutput}`));
       }
@@ -372,12 +394,13 @@ export async function debateMode(prompt, options = {}) {
   }
 
   const startTime = Date.now();
+  const useCache = options.cache !== false;
   const promises = activeModels.map(([key, config]) => {
     if (format !== 'json') {
       process.stdout.write(`${config.color}  ▶ ${config.name}${RESET} `);
     }
     return withRetry(
-      () => runModel(key, config, prompt),
+      () => runModel(key, config, prompt, useCache),
       {
         maxRetries: 2,
         baseDelay: 1000,
@@ -389,7 +412,11 @@ export async function debateMode(prompt, options = {}) {
       }
     ).then(result => {
       if (format !== 'json') {
-        process.stdout.write(`${config.color}✓${RESET} (${result.duration}ms)\n`);
+        if (result.cached) {
+          process.stdout.write(`${config.color}✓${RESET} CACHED (${Math.round(result.cacheAge / 1000)}s ago)\n`);
+        } else {
+          process.stdout.write(`${config.color}✓${RESET} (${result.duration}ms)\n`);
+        }
       }
       return { status: 'fulfilled', value: result };
     }).catch(err => {
@@ -513,6 +540,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
 
   const detach = args.includes('--detach');
   const synthesize = args.includes('--synthesize');
+  const cache = !args.includes('--no-cache');
 
   // Filter out flags and their values from args
   const filteredArgs = args.filter((_, i) => {
@@ -521,12 +549,13 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     if (i === modelsIndex || i === modelsIndex + 1) return false;
     if (args[i] === '--detach') return false;
     if (args[i] === '--synthesize') return false;
+    if (args[i] === '--no-cache') return false;
     return true;
   });
 
   const prompt = filteredArgs.join(' ');
 
-  debateMode(prompt, { tier, format, models, detach, synthesize }).catch(err => {
+  debateMode(prompt, { tier, format, models, detach, synthesize, cache }).catch(err => {
     console.error('Error:', err.message);
     process.exit(1);
   });
