@@ -60,12 +60,14 @@ scripts/
 ### Route Command
 
 ```
-User Prompt → Intent Classification → Model Selection → XML Prompt Builder → ollama run
+User Prompt → Intent Classification → Complexity Detection (optional) → Model Selection → XML Prompt Builder → ollama run
                 ↓
          Confidence Score
                 ↓
          Role Assignment
 ```
+
+With `--vertical` flag: complexity scoring (prompt length, code presence, technical density, reasoning depth) adjusts the selected model up or down within the intent-compatible range.
 
 ### Panel Command
 

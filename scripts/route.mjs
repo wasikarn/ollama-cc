@@ -6,7 +6,7 @@
 
 import { spawn } from 'child_process';
 import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
-import { detectModelFromIntent, getPromptTemplate } from './lib/intent-router.mjs';
+import { detectModelFromIntent, getPromptTemplate, detectComplexity } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
 import { log, withRetry, resolveModelName } from './lib/utils.mjs';
 
@@ -166,12 +166,15 @@ function estimateTokens(text) {
  */
 export async function smartRouter(prompt, options = {}) {
   if (!prompt) {
-    log('error', 'No prompt provided. Usage: route "<prompt>" [--explain] [--show-intent] [--dry-run] [--budget]');
+    log('error', 'No prompt provided. Usage: route "<prompt>" [--explain] [--show-intent] [--dry-run] [--budget] [--vertical]');
     process.exit(1);
   }
 
   // Get intent-based classification (single call — detectModelFromIntent internally classifies)
-  const detection = detectModelFromIntent(prompt, { verbose: options.verbose });
+  const detection = detectModelFromIntent(prompt, { verbose: options.verbose, vertical: options.vertical });
+
+  // Compute complexity for display
+  const complexity = detectComplexity(prompt);
   const classification = {
     intent: detection.intent,
     confidence: detection.confidence,
@@ -199,6 +202,9 @@ export async function smartRouter(prompt, options = {}) {
     console.log(`  Confidence: ${(detection.confidence * 100).toFixed(1)}%`);
     console.log(`  Role: ${detection.role} (${detection.roleDescription})`);
     console.log(`  Category: ${detection.category}`);
+    if (options.vertical || detection.complexityAdjusted) {
+      console.log(`  Complexity: ${complexity.tier} (score: ${complexity.score}${complexity.factors.length > 0 ? ', ' + complexity.factors.join(', ') : ''})`);
+    }
     console.log(`  Routed to: ${detection.model}`);
     console.log(`  Reason: ${detection.reason}`);
     console.log(`  Expertise: ${detection.expertise}`);
@@ -247,6 +253,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const noStructuredFlag = args.includes('--no-structured');
     const dryRunFlag = args.includes('--dry-run');
     const budgetFlag = args.includes('--budget');
+    const verticalFlag = args.includes('--vertical');
 
     // Parse --model flag
     const modelFlagIndex = args.findIndex(a => a === '--model');
@@ -278,7 +285,8 @@ if (import.meta.url === `file://${process.argv[1]}`) {
         verbose: verboseFlag,
         structured: !noStructuredFlag,
         dryRun: dryRunFlag,
-        budget: budgetFlag
+        budget: budgetFlag,
+        vertical: verticalFlag
       });
     }
   })();

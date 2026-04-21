@@ -2,7 +2,7 @@
 name: route
 version: "1.1.0"
 description: Auto-route prompts to the best Ollama model using intent-based classification. Detects task type (debug, design, refactor, reasoning, etc.) and routes to kimi-k2.6, glm-5.1, gemma4, or qwen3.5 with structured XML prompts.
-argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured] [--dry-run] [--budget] [--model <name>]
+argument-hint: <prompt> [--explain] [--show-intent] [--verbose] [--no-structured] [--dry-run] [--budget] [--vertical] [--model <name>]
 ---
 
 # /ollama:route
@@ -27,6 +27,7 @@ Auto-route prompts to the best Ollama model using intelligent intent classificat
 | `--no-structured` | Disable XML structured prompts               |
 | `--dry-run`       | Show routing decision without executing      |
 | `--budget`        | Show token estimate without executing        |
+| `--vertical`      | Enable complexity-based vertical routing     |
 | `--model <name>`  | Override model selection                     |
 
 ## Intent-Based Model Routing
@@ -76,7 +77,28 @@ The router uses an intent classification system to determine the best model:
 
 # Budget — show token estimate without executing
 /ollama:route --budget "design a payment gateway"
+
+# Vertical routing — complexity-aware model selection
+/ollama:route --vertical --explain "what is 2+2"
+/ollama:route --vertical "design a distributed system with consensus"
 ```
+
+## Vertical Routing
+
+Use `--vertical` to enable complexity-based model adjustment:
+
+| Complexity  | Trigger                                        | Behavior                        |
+| ----------- | ---------------------------------------------- | ------------------------------- |
+| **Simple**  | Short prompt, no code, basic terms             | Downgrades to faster models     |
+| **Medium**  | Moderate length, some technical content        | Uses standard intent routing    |
+| **Complex** | Long prompt, code blocks, deep reasoning terms | Upgrades to most capable models |
+
+### Complexity Factors
+
+- Prompt length (words/lines)
+- Presence of code blocks or inline code
+- Technical term density (architecture, concurrency, distributed systems, etc.)
+- Reasoning depth indicators (prove, theorem, step-by-step, etc.)
 
 ## Intent Classification Output
 
@@ -117,5 +139,8 @@ When enabled (default), the router wraps prompts in XML blocks:
 ${CLAUDE_PLUGIN_ROOT}/scripts/route.mjs "{{prompt}}" \
   {{#if explain}}--explain{{/if}} \
   {{#if show-intent}}--show-intent{{/if}} \
-  {{#if verbose}}--verbose{{/if}}
+  {{#if verbose}}--verbose{{/if}} \
+  {{#if vertical}}--vertical{{/if}} \
+  {{#if dry-run}}--dry-run{{/if}} \
+  {{#if budget}}--budget{{/if}}
 ```

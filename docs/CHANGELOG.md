@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.2.2 — Vertical Routing
+
+### Added
+
+- **Vertical routing** (`--vertical`) — complexity-aware model selection
+  - `detectComplexity()` scores prompts on length, code presence, technical density, reasoning depth
+  - Simple tasks downgraded to faster models (e.g., glm-5.1 → kimi)
+  - Complex tasks upgraded to most capable models (e.g., kimi → qwen)
+  - Works alongside intent classification; displayed in `--explain`, `--dry-run`, `--budget`
+
 ## v0.2.1 — Ephemeral Background Execution
 
 ### Changed

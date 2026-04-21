@@ -238,7 +238,7 @@ export function detectModelFromIntent(prompt, options = {}) {
   const modelKey = classification.recommendedModel;
   const modelConfig = MODELS[modelKey] || MODELS.kimi;
 
-  const result = {
+  let result = {
     model: modelConfig.name,
     modelKey,
     intent: classification.intent,
@@ -252,6 +252,12 @@ export function detectModelFromIntent(prompt, options = {}) {
     alternatives: classification.alternatives || []
   };
 
+  // Apply vertical routing (complexity-based model adjustment)
+  if (options.vertical) {
+    const complexity = detectComplexity(prompt);
+    result = adjustModelByComplexity(result, complexity);
+  }
+
   // Include full classification if verbose mode
   if (options.verbose) {
     result.classification = classification;
@@ -262,8 +268,97 @@ export function detectModelFromIntent(prompt, options = {}) {
 }
 
 /**
- * Get suggested prompt template based on intent
+ * Detect prompt complexity for vertical routing
+ * Returns tier and score based on prompt characteristics
  */
+export function detectComplexity(prompt) {
+  if (!prompt || typeof prompt !== 'string') {
+    return { tier: 'simple', score: 0, factors: [] };
+  }
+
+  const words = prompt.split(/\s+/).length;
+  const lines = prompt.split('\n').length;
+  const hasCodeBlock = /```[a-z]*\n[\s\S]*?```/.test(prompt);
+  const hasInlineCode = /`[^`]+`/.test(prompt);
+  const technicalTerms = (prompt.match(/\b(api|database|architecture|microservice|algorithm|optimization|refactor|implementation|infrastructure|distributed|concurrency|async|parallel|kubernetes|docker|graphql|protobuf|grpc|redis|postgres|elasticsearch|kafka|rabbitmq|terraform|ansible|prometheus|grafana|oauth|jwt|rbac|encryption|hashing|compression|serialization|deserialization|middleware|interceptor|decorator|observer|singleton|factory|adapter|facade|proxy|bridge|composite|strategy|command|mediator|state|visitor|memento|flyweight|builder|prototype|chain|template|iterator|coroutine|generator|yield|async await|promise|callback|event loop|thread pool|connection pool|load balancer|reverse proxy|cdn|cache|index|shard|replica|partition|migration|seed|fixture|mock|stub|spy|fixture|benchmark|profiling|tracing|logging|metric|alert|health check|circuit breaker|rate limit|throttle|backpressure|retry|timeout|deadline|idempotency|empotency|atomicity|consistency|isolation|durability|acid|base|cap|solid|dry|kiss|yagni)\b/gi) || []).length;
+  const reasoningTerms = (prompt.match(/\b(prove|theorem|lemma|corollary|axiom|induction|contradiction|converse|inverse|contrapositive|necessary|sufficient|iff|logically|formally|derive|deduce|infer|conclude|justify|rationale|why|how does|explain in depth|step by step|walk through|deep dive|thorough analysis|comprehensive|exhaustive|elaborate|expand on|in detail|rigorous|mathematical|formal|systematic)\b/gi) || []).length;
+
+  let score = 0;
+  const factors = [];
+
+  // Length scoring
+  if (words > 300) { score += 4; factors.push('very long prompt'); }
+  else if (words > 150) { score += 2; factors.push('long prompt'); }
+  else if (words > 50) { score += 1; }
+
+  if (lines > 20) { score += 2; factors.push('many lines'); }
+
+  // Code presence
+  if (hasCodeBlock) { score += 3; factors.push('code block'); }
+  if (hasInlineCode) { score += 1; }
+
+  // Technical depth
+  if (technicalTerms > 5) { score += 3; factors.push('high technical density'); }
+  else if (technicalTerms > 2) { score += 1; }
+
+  // Reasoning depth
+  if (reasoningTerms > 3) { score += 3; factors.push('deep reasoning required'); }
+  else if (reasoningTerms > 1) { score += 1; }
+
+  // Determine tier
+  let tier;
+  if (score >= 6) tier = 'complex';
+  else if (score >= 3) tier = 'medium';
+  else tier = 'simple';
+
+  return { tier, score, factors };
+}
+
+/**
+ * Adjust model selection based on complexity tier
+ * Upgrades/downgrades within intent-compatible models
+ */
+export function adjustModelByComplexity(intentResult, complexity) {
+  const { tier } = complexity;
+  const currentModel = intentResult.modelKey;
+
+  // Define complexity-based model overrides
+  const upgrades = {
+    'kimi': 'qwen',       // simple general → complex reasoning
+    'gemma4': 'glm-5.1',  // simple refactor → complex coding
+  };
+
+  const downgrades = {
+    'glm-5.1': 'kimi',    // complex coding → simple general (for simple prompts)
+    'qwen': 'kimi',       // complex reasoning → simple general (for simple prompts)
+  };
+
+  if (tier === 'complex' && upgrades[currentModel]) {
+    const upgraded = upgrades[currentModel];
+    return {
+      ...intentResult,
+      model: MODELS[upgraded].name,
+      modelKey: upgraded,
+      reason: `${intentResult.reason} (upgraded for complexity)`,
+      complexityAdjusted: true,
+      complexity
+    };
+  }
+
+  if (tier === 'simple' && downgrades[currentModel]) {
+    const downgraded = downgrades[currentModel];
+    return {
+      ...intentResult,
+      model: MODELS[downgraded].name,
+      modelKey: downgraded,
+      reason: `${intentResult.reason} (downgraded for simplicity)`,
+      complexityAdjusted: true,
+      complexity
+    };
+  }
+
+  return { ...intentResult, complexity };
+}
 export function getPromptTemplate(intent) {
   const templates = {
     DEBUG: 'Focus on root cause analysis. Provide step-by-step debugging approach.',
