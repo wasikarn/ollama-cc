@@ -183,11 +183,11 @@ export const DEFAULT_CONFIG = {
 };
 
 /**
- * Load user configuration from ~/.ollama-cli/config.json
+ * Load user configuration from ~/.ollama-cc/config.json
  * Merges with defaults and returns the combined config
  */
 export async function loadUserConfig() {
-  const configPath = join(homedir(), '.ollama-cli', 'config.json');
+  const configPath = join(homedir(), '.ollama-cc', 'config.json');
 
   try {
     const content = await readFile(configPath, 'utf-8');
@@ -196,7 +196,7 @@ export async function loadUserConfig() {
   } catch (err) {
     // Config file doesn't exist or is invalid, return defaults
     if (err.code !== 'ENOENT') {
-      console.warn(`[ollama] Warning: Could not load config from ${configPath}: ${err.message}`);
+      console.warn(`[omo] Warning: Could not load config from ${configPath}: ${err.message}`);
     }
     return { ...DEFAULT_CONFIG };
   }

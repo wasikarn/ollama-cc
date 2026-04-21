@@ -5,7 +5,7 @@
  */
 
 import { spawn } from 'child_process';
-import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS } from './lib/config.mjs';
+import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS, loadUserConfig } from './lib/config.mjs';
 import { detectModelFromIntent, detectComplexity } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
 import { log, withRetry, resolveModelName } from './lib/utils.mjs';
@@ -185,8 +185,19 @@ export async function smartRouter(prompt, options = {}) {
     process.exit(1);
   }
 
+  // Load user config for defaults
+  const userConfig = await loadUserConfig();
+
   // Get intent-based classification (single call — detectModelFromIntent internally classifies)
   const detection = detectModelFromIntent(prompt, { verbose: options.verbose, vertical: options.vertical });
+
+  // Override with user config default model if confidence is low
+  if (detection.confidence < 0.3 && userConfig.default_model) {
+    const defaultModel = MODELS[userConfig.default_model] || MODELS.kimi;
+    detection.model = defaultModel.name;
+    detection.modelKey = userConfig.default_model;
+    detection.reason = `${detection.reason} (fallback to user default: ${userConfig.default_model})`;
+  }
 
   // Compute complexity for display
   const complexity = detectComplexity(prompt);

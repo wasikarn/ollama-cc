@@ -10,7 +10,6 @@ import { join } from 'path';
 import { homedir } from 'os';
 import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { resolveModelName, withRetry } from './lib/utils.mjs';
-import { createJob } from './lib/job-store.mjs';
 import { spawnBackground } from './lib/background.mjs';
 import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
 
