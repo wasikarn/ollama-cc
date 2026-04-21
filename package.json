@@ -1,6 +1,6 @@
 {
   "name": "ollama-cc",
-  "version": "0.2.0",
+  "version": "0.2.3",
   "description": "Ollama Model Orchestrator (OMO) — intelligent routing, multi-model consensus, and parallel worker execution",
   "main": "scripts/omo.mjs",
   "type": "module",
