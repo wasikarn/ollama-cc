@@ -22,6 +22,7 @@ OMO (Ollama Model Orchestrator) is a Claude Code plugin that provides intelligen
 /ollama:jobs    → Job lifecycle
 /ollama:daemon  → Daemon control
 /ollama:ask     → Direct model access
+/ollama:health  → System health check
 ```
 
 ### CLI Commands (Terminal)
@@ -33,6 +34,7 @@ omo swarm   → Parallel
 omo jobs    → Jobs
 omo daemon  → Daemon
 omo ask     → Direct
+omo health  → Health check
 ```
 
 ## Module Structure

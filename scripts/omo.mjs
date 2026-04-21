@@ -7,6 +7,7 @@
 import { smartRouter } from './route.mjs';
 import { debateMode } from './panel.mjs';
 import { teamMode } from './swarm.mjs';
+import { healthCheck } from './health.mjs';
 import { parseArgs } from './lib/utils.mjs';
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
@@ -36,6 +37,7 @@ Commands:
   swarm N:model "<task>"         Parallel workers
   jobs [job-id] [--stats]          Job lifecycle management
   daemon [--status]              Background job status
+  health [--format json]         Check Ollama + model availability
   help                             Show this help
 
 Examples:
@@ -88,6 +90,12 @@ async function main() {
       const { default: daemonMain } = await import('./daemon.mjs');
       process.argv = ['node', 'daemon.mjs', ...positionals.slice(1)];
       daemonMain();
+      break;
+    }
+
+    case 'health': {
+      const format = flags.format || 'text';
+      await healthCheck({ format });
       break;
     }
 

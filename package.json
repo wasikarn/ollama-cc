@@ -1,6 +1,6 @@
 {
   "name": "ollama-cc",
-  "version": "0.2.3",
+  "version": "0.2.6",
   "description": "Ollama Model Orchestrator (OMO) — intelligent routing, multi-model consensus, and parallel worker execution",
   "main": "scripts/omo.mjs",
   "type": "module",
@@ -10,7 +10,8 @@
     "omo-panel": "./scripts/panel.mjs",
     "omo-swarm": "./scripts/swarm.mjs",
     "omo-jobs": "./scripts/jobs.mjs",
-    "omo-daemon": "./scripts/daemon.mjs"
+    "omo-daemon": "./scripts/daemon.mjs",
+    "omo-health": "./scripts/health.mjs"
   },
   "scripts": {
     "test": "node --test",

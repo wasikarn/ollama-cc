@@ -1,5 +1,18 @@
 # Changelog
 
+## v0.2.6 — Health Check Command
+
+### Added
+
+- **`/ollama:health` / `omo health`** — System health check command
+  - Verifies Ollama installation and version
+  - Lists available models via `ollama list`
+  - Checks which configured models are ready to use
+  - Shows `ollama pull <model>` command for missing models
+  - JSON output mode (`--format json`)
+- Updated `omo.mjs` CLI dispatcher with `health` case
+- Added `omo-health` binary to package.json
+
 ## v0.2.5 — Response Caching
 
 ### Added
