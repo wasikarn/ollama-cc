@@ -82,9 +82,10 @@ describe('cache', () => {
     setCachedResponse(testModel, 'stats-test', { output: 'stats' });
 
     const stats = getCacheStats();
-    assert.ok(stats.count >= 1);
-    assert.ok(stats.totalSize > 0);
-    assert.ok(stats.dir.includes('.ollama-cc'));
+    assert.ok(stats.disk.count >= 1);
+    assert.ok(stats.disk.totalSize > 0);
+    assert.ok(stats.disk.dir.includes('.ollama-cc'));
+    assert.ok(stats.memory.size >= 1);
   });
 
   it('handles empty output gracefully', () => {

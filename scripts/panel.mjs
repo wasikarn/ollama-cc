@@ -12,13 +12,24 @@ import { MODELS, COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { withRetry } from './lib/utils.mjs';
 import { spawnBackground } from './lib/background.mjs';
 import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
+import { ConcurrencyLimiter } from './lib/concurrency-limiter.mjs';
 
 const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
+
+// Global concurrency limiter: max 3 concurrent Ollama calls (bulkhead)
+const ollamaLimiter = new ConcurrencyLimiter(3);
 
 /**
  * Run a single model and capture output
  */
 function runModel(modelKey, modelConfig, prompt, useCache = true) {
+  return ollamaLimiter.execute(() => runModelRaw(modelKey, modelConfig, prompt, useCache));
+}
+
+/**
+ * Run a single model and capture output (unlimited — called through limiter)
+ */
+function runModelRaw(modelKey, modelConfig, prompt, useCache = true) {
   return new Promise((resolve, reject) => {
     // Check cache first
     if (useCache) {

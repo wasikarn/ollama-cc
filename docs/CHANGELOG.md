@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.2.8 — Performance Patterns (Cache-Aside, Bulkhead, Rate Limiting)
+
+### Added
+
+- **In-Memory LRU Cache** (`scripts/lib/lru-cache.mjs`) — two-tier caching layer
+  - Memory-first lookups (O(1)), disk as fallback
+  - Automatic LRU eviction (max 100 entries), TTL expiry
+  - Promotes disk hits to memory, reducing repeated disk I/O
+- **Concurrency Limiter (Bulkhead)** (`scripts/lib/concurrency-limiter.mjs`)
+  - Max 3 concurrent Ollama calls in panel mode
+  - Prevents overwhelming local Ollama instance
+  - FIFO queue for excess calls, status tracking
+- **Rate Limiter (Token Bucket)** (`scripts/lib/rate-limiter.mjs`)
+  - Configurable burst capacity + refill rate
+  - Wired into `route.mjs`: 5 burst / 2 per second refill
+  - Non-blocking `tryAcquire()` + blocking `acquire()`
+- **16 tests** for LRU cache, concurrency limiter, token bucket
+
+### Changed
+
+- **Cache module v2** (`scripts/lib/cache.mjs`) — two-tier architecture
+  - Layer 1: in-memory LRU (fast path)
+  - Layer 2: file-based persistent cache
+  - Stats now return `{ memory, disk }` structure
+- **Panel concurrency** — wrapped `runModel` through `ConcurrencyLimiter(3)`
+- **Route throttling** — acquire token before spawning ollama process
+
 ## v0.2.7 — Wiki-Central Patterns (Retry, Circuit Breaker, Consensus)
 
 ### Added

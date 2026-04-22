@@ -10,6 +10,10 @@ import { detectModelFromIntent, detectComplexity } from './lib/intent-router.mjs
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
 import { log, withRetry, resolveModelName } from './lib/utils.mjs';
 import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
+import { TokenBucket } from './lib/rate-limiter.mjs';
+
+// Global rate limiter: 5 calls per second burst, refill 2/sec
+const ollamaRateLimiter = new TokenBucket({ capacity: 5, refillRate: 2 });
 
 /**
  * Detect best model using intent-based classification
@@ -82,7 +86,7 @@ function formatIntentClassification(classification) {
  * Run ollama with given model and prompt
  */
 function runOllama(model, prompt, options = {}) {
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const useStructured = options.structured !== false;
     const useCache = options.cache !== false;
 
@@ -110,6 +114,9 @@ function runOllama(model, prompt, options = {}) {
         return;
       }
     }
+
+    // Acquire rate limit token before spawning
+    await ollamaRateLimiter.acquire();
 
     const args = ['run', model, finalPrompt];
 

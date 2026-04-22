@@ -1,16 +1,20 @@
 #!/usr/bin/env node
 /**
  * OMO - Response Cache
- * File-based caching for model responses with TTL support
+ * File-based caching with in-memory LRU layer for fast repeated lookups
  */
 
 import { createHash } from 'crypto';
 import { mkdirSync, existsSync, readFileSync, writeFileSync, unlinkSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { LRUCache } from './lru-cache.mjs';
 
 const CACHE_DIR = join(homedir(), '.ollama-cc', 'cache');
 const DEFAULT_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+// Shared in-memory LRU cache (max 100 entries, 1h TTL)
+const memoryCache = new LRUCache({ maxSize: 100, ttlMs: DEFAULT_TTL_MS });
 
 /**
  * Ensure cache directory exists
@@ -34,16 +38,33 @@ function getCachePath(key) {
 }
 
 /**
- * Get cached response if valid
+ * Get cached response if valid (memory-first, then disk)
  * @param {string} model - Model name
  * @param {string} prompt - Prompt text
  * @param {number} ttlMs - TTL in milliseconds
  * @returns {object|null} Cached entry or null
  */
 export function getCachedResponse(model, prompt, ttlMs = DEFAULT_TTL_MS) {
-  ensureCacheDir();
-
   const key = generateKey(model, prompt);
+
+  // Layer 1: In-memory cache
+  const memEntry = memoryCache.get(key);
+  if (memEntry) {
+    const age = Date.now() - memEntry.timestampMs;
+    // Respect TTL parameter even for memory entries
+    if (ttlMs <= 0 || (age > ttlMs && age >= 0)) {
+      memoryCache.delete(key);
+      return null;
+    }
+    return {
+      ...memEntry,
+      cached: true,
+      cacheAge: age
+    };
+  }
+
+  // Layer 2: File cache
+  ensureCacheDir();
   const cachePath = getCachePath(key);
 
   if (!existsSync(cachePath)) return null;
@@ -66,6 +87,9 @@ export function getCachedResponse(model, prompt, ttlMs = DEFAULT_TTL_MS) {
       return null;
     }
 
+    // Promote to memory cache
+    memoryCache.set(key, entry);
+
     return {
       ...entry,
       cached: true,
@@ -79,34 +103,45 @@ export function getCachedResponse(model, prompt, ttlMs = DEFAULT_TTL_MS) {
 }
 
 /**
- * Store response in cache
+ * Store response in cache (memory + disk)
  * @param {string} model - Model name
  * @param {string} prompt - Prompt text
  * @param {object} response - Response object (must have `output` field)
  */
 export function setCachedResponse(model, prompt, response) {
-  ensureCacheDir();
-
   const key = generateKey(model, prompt);
-  const cachePath = getCachePath(key);
 
   const entry = {
     model,
     prompt: prompt.slice(0, 200), // Truncated for debugging
     output: response.output,
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    timestampMs: Date.now()
   };
 
-  writeFileSync(cachePath, JSON.stringify(entry, null, 2));
+  // Layer 1: Write to memory
+  memoryCache.set(key, entry);
+
+  // Layer 2: Write to file (async background — fire and forget)
+  ensureCacheDir();
+  const cachePath = getCachePath(key);
+  try {
+    writeFileSync(cachePath, JSON.stringify(entry, null, 2));
+  } catch {
+    // Best-effort: memory cache is primary; file is secondary
+  }
 }
 
 /**
- * Clear all cached responses
+ * Clear all cached responses (memory + disk)
  * @returns {number} Number of files removed
  */
 export function clearCache() {
-  ensureCacheDir();
+  // Clear memory
+  memoryCache.clear();
 
+  // Clear disk
+  ensureCacheDir();
   const files = readdirSync(CACHE_DIR).filter(f => f.endsWith('.json'));
   let removed = 0;
 
@@ -142,5 +177,8 @@ export function getCacheStats() {
     }
   }
 
-  return { count, totalSize, dir: CACHE_DIR };
+  return {
+    memory: memoryCache.getStats(),
+    disk: { count, totalSize, dir: CACHE_DIR }
+  };
 }
