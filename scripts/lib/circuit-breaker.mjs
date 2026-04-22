@@ -189,3 +189,17 @@ export function getAllBreakerStatuses() {
     ...breaker.getStatus()
   }));
 }
+
+/**
+ * Delete a breaker from the global registry
+ */
+export function deleteBreaker(name) {
+  return GLOBAL_BREAKERS.delete(name);
+}
+
+/**
+ * Clear all breakers from the global registry
+ */
+export function clearAllBreakers() {
+  GLOBAL_BREAKERS.clear();
+}

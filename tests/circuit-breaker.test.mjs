@@ -5,7 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert';
-import { createCircuitBreaker, CircuitBreakerOpenError } from '../scripts/lib/circuit-breaker.mjs';
+import { createCircuitBreaker, CircuitBreakerOpenError, getBreaker, getAllBreakerStatuses, deleteBreaker, clearAllBreakers } from '../scripts/lib/circuit-breaker.mjs';
 
 describe('createCircuitBreaker', () => {
   it('allows calls when CLOSED (default)', async () => {
@@ -108,5 +108,23 @@ describe('CircuitBreakerOpenError', () => {
     assert.ok(err.message.includes('OPEN'));
     assert.strictEqual(err.breakerName, 'test');
     assert.strictEqual(err.retryAfterMs, 5000);
+  });
+});
+
+describe('breaker registry cleanup', () => {
+  it('deletes a breaker by name', () => {
+    clearAllBreakers();
+    const b = getBreaker('cleanup-test');
+    assert.ok(b);
+    assert.strictEqual(deleteBreaker('cleanup-test'), true);
+    assert.strictEqual(deleteBreaker('cleanup-test'), false);
+  });
+
+  it('clears all breakers', () => {
+    getBreaker('b1');
+    getBreaker('b2');
+    assert.ok(getAllBreakerStatuses().length >= 2);
+    clearAllBreakers();
+    assert.strictEqual(getAllBreakerStatuses().length, 0);
   });
 });

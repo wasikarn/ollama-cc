@@ -1,5 +1,32 @@
 # Changelog
 
+## v0.2.9 — Memory Leak Prevention & Process Cleanup
+
+### Added
+
+- **Spawn Utilities** (`scripts/lib/spawn-utils.mjs`) — safe child process wrapper
+  - Automatic timeout kill (5 min default, SIGTERM → 5s → SIGKILL)
+  - SIGINT/SIGTERM handlers to kill active children on exit
+  - Event listener cleanup (`removeAllListeners`) after process ends
+  - Active child process tracking (`getActiveChildCount`)
+- **Queue bounds** on limiters to prevent unbounded growth
+  - `TokenBucket`: `maxQueueSize` (default 100), rejects when full
+  - `ConcurrencyLimiter`: `maxQueueSize` (default 100), rejects when full
+- **Destroy methods** on limiters for graceful teardown
+  - `TokenBucket.destroy()` — clears timer, rejects all waiters
+  - `ConcurrencyLimiter.destroy()` — wakes waiters (they throw on next execute)
+- **Circuit breaker registry cleanup**
+  - `deleteBreaker(name)` and `clearAllBreakers()` for explicit cleanup
+
+### Changed
+
+- **All spawn calls** now route through `spawnWithCleanup`:
+  - `panel.mjs` — `runModelRaw`, `runSynthesizer`
+  - `route.mjs` — `runOllama` (with streaming `onData` callback)
+  - `swarm.mjs` — `runWorker`
+  - `health.mjs` — `runCommand`
+- **80 tests passing** (was 74), covering queue full rejection, destroy behavior, registry cleanup
+
 ## v0.2.8 — Performance Patterns (Cache-Aside, Bulkhead, Rate Limiting)
 
 ### Added

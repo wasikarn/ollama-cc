@@ -99,7 +99,10 @@ describe('ConcurrencyLimiter', () => {
 
   it('tracks status correctly', async () => {
     const limiter = new ConcurrencyLimiter(2);
-    assert.deepStrictEqual(limiter.getStatus(), { running: 0, queued: 0, maxConcurrent: 2 });
+    const status = limiter.getStatus();
+    assert.strictEqual(status.running, 0);
+    assert.strictEqual(status.queued, 0);
+    assert.strictEqual(status.maxConcurrent, 2);
 
     const p = limiter.execute(() => new Promise(r => setTimeout(r, 50)));
     assert.strictEqual(limiter.getStatus().running, 1);
@@ -148,5 +151,61 @@ describe('TokenBucket', () => {
     assert.strictEqual(status.tokens, 4);
     assert.strictEqual(status.capacity, 5);
     assert.strictEqual(status.waiting, 0);
+  });
+
+  it('rejects when queue is full', async () => {
+    const bucket = new TokenBucket({ capacity: 1, refillRate: 0.001, maxQueueSize: 1 });
+    bucket.tryAcquire(); // exhaust token
+
+    // First waiter fills queue
+    const p1 = bucket.acquire();
+
+    // Second waiter should reject immediately
+    await assert.rejects(
+      bucket.acquire(),
+      /queue full/
+    );
+
+    bucket.destroy();
+    await assert.rejects(p1, /destroyed/);
+  });
+
+  it('rejects acquire on destroyed bucket', async () => {
+    const bucket = new TokenBucket({ capacity: 1, refillRate: 1 });
+    bucket.destroy();
+    await assert.rejects(
+      bucket.acquire(),
+      /destroyed/
+    );
+  });
+});
+
+describe('ConcurrencyLimiter queue bounds', () => {
+  it('rejects when queue exceeds maxQueueSize', async () => {
+    const limiter = new ConcurrencyLimiter(1, { maxQueueSize: 1 });
+
+    // First task occupies the slot
+    const p1 = limiter.execute(() => new Promise(r => setTimeout(r, 200)));
+
+    // Second task fills the queue
+    const p2 = limiter.execute(() => Promise.resolve(2));
+
+    // Third task should reject immediately
+    await assert.rejects(
+      limiter.execute(() => Promise.resolve(3)),
+      /queue full/
+    );
+
+    await p1;
+    await p2;
+  });
+
+  it('rejects execute on destroyed limiter', async () => {
+    const limiter = new ConcurrencyLimiter(1);
+    limiter.destroy();
+    await assert.rejects(
+      limiter.execute(() => Promise.resolve(1)),
+      /destroyed/
+    );
   });
 });

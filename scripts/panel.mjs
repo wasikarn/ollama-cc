@@ -4,7 +4,6 @@
  * Multi-model consensus with quality tiers, JSON output, and daemon support
  */
 
-import { spawn } from 'child_process';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -13,6 +12,7 @@ import { withRetry } from './lib/utils.mjs';
 import { spawnBackground } from './lib/background.mjs';
 import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
 import { ConcurrencyLimiter } from './lib/concurrency-limiter.mjs';
+import { spawnWithCleanup } from './lib/spawn-utils.mjs';
 
 const { reset: RESET, yellow: YELLOW, blue: BLUE } = COLORS;
 
@@ -29,68 +29,49 @@ function runModel(modelKey, modelConfig, prompt, useCache = true) {
 /**
  * Run a single model and capture output (unlimited — called through limiter)
  */
-function runModelRaw(modelKey, modelConfig, prompt, useCache = true) {
-  return new Promise((resolve, reject) => {
-    // Check cache first
-    if (useCache) {
-      const cached = getCachedResponse(modelConfig.name, prompt);
-      if (cached) {
-        resolve({
-          model: modelKey,
-          modelName: modelConfig.name,
-          output: cached.output,
-          duration: 0,
-          expertise: modelConfig.expertise,
-          cached: true,
-          cacheAge: cached.cacheAge
-        });
-        return;
+async function runModelRaw(modelKey, modelConfig, prompt, useCache = true) {
+  // Check cache first
+  if (useCache) {
+    const cached = getCachedResponse(modelConfig.name, prompt);
+    if (cached) {
+      return {
+        model: modelKey,
+        modelName: modelConfig.name,
+        output: cached.output,
+        duration: 0,
+        expertise: modelConfig.expertise,
+        cached: true,
+        cacheAge: cached.cacheAge
+      };
+    }
+  }
+
+  const { output, errorOutput, code, duration } = await spawnWithCleanup(
+    'ollama',
+    ['run', modelConfig.name, prompt, '--nowordwrap'],
+    {
+      timeoutMs: 300000,
+      spawnOptions: {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, ...OLLAMA_ENV }
       }
     }
+  );
 
-    const startTime = Date.now();
-    const child = spawn('ollama', ['run', modelConfig.name, prompt, '--nowordwrap'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        ...OLLAMA_ENV
-      }
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
-
-    child.on('close', (code) => {
-      const duration = Date.now() - startTime;
-      if (code === 0) {
-        const result = {
-          model: modelKey,
-          modelName: modelConfig.name,
-          output: output.trim(),
-          duration,
-          expertise: modelConfig.expertise
-        };
-        if (useCache) {
-          setCachedResponse(modelConfig.name, prompt, result);
-        }
-        resolve(result);
-      } else {
-        reject(new Error(`${modelConfig.name} exited with code ${code}: ${errorOutput}`));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(new Error(`Failed to spawn ${modelConfig.name}: ${err.message}`));
-    });
-  });
+  if (code === 0) {
+    const result = {
+      model: modelKey,
+      modelName: modelConfig.name,
+      output: output.trim(),
+      duration,
+      expertise: modelConfig.expertise
+    };
+    if (useCache) {
+      setCachedResponse(modelConfig.name, prompt, result);
+    }
+    return result;
+  }
+  throw new Error(`${modelConfig.name} exited with code ${code}: ${errorOutput}`);
 }
 
 /**
@@ -288,7 +269,7 @@ function generateSynthesis(results, consensus, tier) {
 /**
  * Run synthesizer model to produce unified response from all outputs
  */
-function runSynthesizer(results, prompt) {
+async function runSynthesizer(results, prompt) {
   const synthesizerModel = 'qwen3.5:397b-cloud';
 
   const perspectives = results.map(r =>
@@ -309,40 +290,26 @@ Please provide:
 
 Keep your response under 400 words.`;
 
-  return new Promise((resolve, reject) => {
-    const startTime = Date.now();
-    const child = spawn('ollama', ['run', synthesizerModel, synthesisPrompt, '--nowordwrap'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: { ...process.env, ...OLLAMA_ENV }
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        resolve({
-          modelName: synthesizerModel,
-          output: output.trim(),
-          duration: Date.now() - startTime
-        });
-      } else {
-        reject(new Error(`Synthesizer exited with code ${code}: ${errorOutput}`));
+  const { output, errorOutput, code, duration } = await spawnWithCleanup(
+    'ollama',
+    ['run', synthesizerModel, synthesisPrompt, '--nowordwrap'],
+    {
+      timeoutMs: 300000,
+      spawnOptions: {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, ...OLLAMA_ENV }
       }
-    });
+    }
+  );
 
-    child.on('error', (err) => {
-      reject(new Error(`Failed to spawn synthesizer: ${err.message}`));
-    });
-  });
+  if (code === 0) {
+    return {
+      modelName: synthesizerModel,
+      output: output.trim(),
+      duration
+    };
+  }
+  throw new Error(`Synthesizer exited with code ${code}: ${errorOutput}`);
 }
 
 /**

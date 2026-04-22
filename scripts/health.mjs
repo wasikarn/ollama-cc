@@ -4,36 +4,28 @@
  * Check Ollama installation, model availability, and system status
  */
 
-import { spawn } from 'child_process';
 import { MODELS, COLORS } from './lib/config.mjs';
+import { spawnWithCleanup } from './lib/spawn-utils.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, red: RED, blue: BLUE, cyan: CYAN } = COLORS;
 
 /**
  * Run a command and capture output
  */
-function runCommand(cmd, args = []) {
-  return new Promise((resolve) => {
-    const child = spawn(cmd, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    let stdout = '';
-    let stderr = '';
-
-    child.stdout.on('data', (data) => {
-      stdout += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      stderr += data.toString();
-    });
-
-    child.on('close', (code) => {
-      resolve({ code, stdout, stderr });
-    });
-
-    child.on('error', () => {
-      resolve({ code: -1, stdout: '', stderr: 'Command not found' });
-    });
-  });
+async function runCommand(cmd, args = []) {
+  try {
+    const { output, errorOutput, code } = await spawnWithCleanup(
+      cmd,
+      args,
+      {
+        timeoutMs: 30000,
+        spawnOptions: { stdio: ['ignore', 'pipe', 'pipe'] }
+      }
+    );
+    return { code, stdout: output, stderr: errorOutput };
+  } catch {
+    return { code: -1, stdout: '', stderr: 'Command not found' };
+  }
 }
 
 /**

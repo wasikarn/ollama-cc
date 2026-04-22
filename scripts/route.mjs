@@ -4,7 +4,7 @@
  * Intent-based model routing with XML prompt blocks
  */
 
-import { spawn } from 'child_process';
+import { spawnWithCleanup } from './lib/spawn-utils.mjs';
 import { MODELS, COMPILED_KEYWORD_MAP, OLLAMA_ENV, COLORS, loadUserConfig } from './lib/config.mjs';
 import { detectModelFromIntent, detectComplexity } from './lib/intent-router.mjs';
 import { createIntentPrompt, createMinimalPrompt } from './lib/prompt-builder.mjs';
@@ -85,78 +85,67 @@ function formatIntentClassification(classification) {
 /**
  * Run ollama with given model and prompt
  */
-function runOllama(model, prompt, options = {}) {
-  return new Promise(async (resolve, reject) => {
-    const useStructured = options.structured !== false;
-    const useCache = options.cache !== false;
+async function runOllama(model, prompt, options = {}) {
+  const useStructured = options.structured !== false;
+  const useCache = options.cache !== false;
 
-    // Build structured prompt if enabled
-    let finalPrompt = prompt;
-    if (useStructured && options.classification) {
-      try {
-        finalPrompt = createIntentPrompt(prompt, {
-          classification: options.classification,
-          includeIntent: true
-        });
-      } catch (err) {
-        log('warn', `Failed to build structured prompt: ${err.message}`);
-        // Fall back to minimal
-        finalPrompt = createMinimalPrompt(prompt, model);
+  // Build structured prompt if enabled
+  let finalPrompt = prompt;
+  if (useStructured && options.classification) {
+    try {
+      finalPrompt = createIntentPrompt(prompt, {
+        classification: options.classification,
+        includeIntent: true
+      });
+    } catch (err) {
+      log('warn', `Failed to build structured prompt: ${err.message}`);
+      // Fall back to minimal
+      finalPrompt = createMinimalPrompt(prompt, model);
+    }
+  }
+
+  // Check cache first
+  if (useCache) {
+    const cached = getCachedResponse(model, finalPrompt);
+    if (cached) {
+      process.stdout.write(cached.output);
+      return cached.output;
+    }
+  }
+
+  // Acquire rate limit token before spawning
+  await ollamaRateLimiter.acquire();
+
+  const args = ['run', model, finalPrompt];
+
+  if (options.nowordwrap !== false) {
+    args.push('--nowordwrap');
+  }
+
+  let output = '';
+  const { code } = await spawnWithCleanup(
+    'ollama',
+    args,
+    {
+      timeoutMs: 300000,
+      spawnOptions: {
+        stdio: ['inherit', 'pipe', 'pipe'],
+        env: { ...process.env, ...OLLAMA_ENV }
+      },
+      onData: (chunk) => {
+        output += chunk;
+        process.stdout.write(chunk);
       }
     }
+  );
 
-    // Check cache first
+  if (code === 0) {
     if (useCache) {
-      const cached = getCachedResponse(model, finalPrompt);
-      if (cached) {
-        process.stdout.write(cached.output);
-        resolve(cached.output);
-        return;
-      }
+      setCachedResponse(model, finalPrompt, { output });
     }
-
-    // Acquire rate limit token before spawning
-    await ollamaRateLimiter.acquire();
-
-    const args = ['run', model, finalPrompt];
-
-    if (options.nowordwrap !== false) {
-      args.push('--nowordwrap');
-    }
-
-    const child = spawn('ollama', args, {
-      stdio: ['inherit', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        ...OLLAMA_ENV
-      }
-    });
-
-    let output = '';
-    child.stdout.on('data', (data) => {
-      output += data;
-      process.stdout.write(data);
-    });
-
-    child.stderr.on('data', (data) => {
-      process.stderr.write(data);
-    });
-
-    child.on('close', (code) => {
-      if (code === 0) {
-        if (useCache) {
-          setCachedResponse(model, finalPrompt, { output });
-        }
-        resolve(output);
-      } else {
-        reject(new Error(`Process exited with code ${code}`));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(new Error(`Failed to spawn ollama: ${err.message}`));
-    });
-  });
+    return output;
+  }
+  throw new Error(`Process exited with code ${code}`);
 }
 
 /**

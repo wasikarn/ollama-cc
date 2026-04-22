@@ -4,7 +4,6 @@
  * Parallel workers with ensemble voting, task distribution, JSON output, and daemon support
  */
 
-import { spawn } from 'child_process';
 import { mkdirSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
@@ -12,6 +11,7 @@ import { COLORS, OLLAMA_ENV } from './lib/config.mjs';
 import { resolveModelName, withRetry } from './lib/utils.mjs';
 import { spawnBackground } from './lib/background.mjs';
 import { getCachedResponse, setCachedResponse } from './lib/cache.mjs';
+import { spawnWithCleanup } from './lib/spawn-utils.mjs';
 
 const { reset: RESET, green: GREEN, yellow: YELLOW, blue: BLUE, cyan: CYAN, magenta: MAGENTA } = COLORS;
 
@@ -64,71 +64,51 @@ function generateSubtasks(template, count) {
 /**
  * Run a single worker
  */
-function runWorker(workerId, modelName, prompt, color, useCache = true) {
-  return new Promise((resolve, reject) => {
-    process.stdout.write(`${color}[${workerId}]${RESET} `);
+async function runWorker(workerId, modelName, prompt, color, useCache = true) {
+  process.stdout.write(`${color}[${workerId}]${RESET} `);
 
-    // Check cache first
-    if (useCache) {
-      const cached = getCachedResponse(modelName, prompt);
-      if (cached) {
-        process.stdout.write(`${color}✓${RESET} CACHED (${Math.round(cached.cacheAge / 1000)}s ago)\n`);
-        resolve({
-          workerId,
-          output: cached.output,
-          duration: 0,
-          status: 'completed',
-          cached: true
-        });
-        return;
+  // Check cache first
+  if (useCache) {
+    const cached = getCachedResponse(modelName, prompt);
+    if (cached) {
+      process.stdout.write(`${color}✓${RESET} CACHED (${Math.round(cached.cacheAge / 1000)}s ago)\n`);
+      return {
+        workerId,
+        output: cached.output,
+        duration: 0,
+        status: 'completed',
+        cached: true
+      };
+    }
+  }
+
+  const { output, errorOutput, code, duration } = await spawnWithCleanup(
+    'ollama',
+    ['run', modelName, prompt, '--nowordwrap'],
+    {
+      timeoutMs: 300000,
+      spawnOptions: {
+        stdio: ['ignore', 'pipe', 'pipe'],
+        env: { ...process.env, ...OLLAMA_ENV }
       }
     }
+  );
 
-    const startTime = Date.now();
-
-    const child = spawn('ollama', ['run', modelName, prompt, '--nowordwrap'], {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      env: {
-        ...process.env,
-        ...OLLAMA_ENV
-      }
-    });
-
-    let output = '';
-    let errorOutput = '';
-
-    child.stdout.on('data', (data) => {
-      output += data.toString();
-    });
-
-    child.stderr.on('data', (data) => {
-      errorOutput += data.toString();
-    });
-
-    child.on('close', (code) => {
-      const duration = Date.now() - startTime;
-      if (code === 0) {
-        process.stdout.write(`${color}✓${RESET} (${duration}ms)\n`);
-        const result = {
-          workerId,
-          output: output.trim(),
-          duration,
-          status: 'completed'
-        };
-        if (useCache) {
-          setCachedResponse(modelName, prompt, result);
-        }
-        resolve(result);
-      } else {
-        process.stdout.write(`${color}✗${RESET} ERROR\n`);
-        reject(new Error(`Worker ${workerId} failed: ${errorOutput}`));
-      }
-    });
-
-    child.on('error', (err) => {
-      reject(new Error(`Worker ${workerId} spawn error: ${err.message}`));
-    });
-  });
+  if (code === 0) {
+    process.stdout.write(`${color}✓${RESET} (${duration}ms)\n`);
+    const result = {
+      workerId,
+      output: output.trim(),
+      duration,
+      status: 'completed'
+    };
+    if (useCache) {
+      setCachedResponse(modelName, prompt, result);
+    }
+    return result;
+  }
+  process.stdout.write(`${color}✗${RESET} ERROR\n`);
+  throw new Error(`Worker ${workerId} failed: ${errorOutput}`);
 }
 
 /**
