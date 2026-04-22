@@ -83,16 +83,86 @@ function runModel(modelKey, modelConfig, prompt, useCache = true) {
 }
 
 /**
- * Calculate simple agreement score between two outputs
+ * Technical keywords with higher weight in agreement scoring
+ */
+const TECH_KEYWORDS = new Set([
+  'microservices', 'monolith', 'architecture', 'database', 'api', 'graphql', 'rest',
+  'async', 'sync', 'concurrency', 'parallel', 'thread', 'queue', 'cache', 'redis',
+  'kubernetes', 'docker', 'terraform', 'aws', 'gcp', 'azure', 'cloud',
+  'encryption', 'auth', 'oauth', 'jwt', 'rbac', 'security', 'vulnerability',
+  'scaling', 'sharding', 'replication', 'load balancer', 'cdn', 'proxy',
+  'transaction', 'acid', 'base', 'consistency', 'availability', 'partition',
+  'event sourcing', 'cqrs', 'saga', 'outbox', 'messaging', 'kafka', 'rabbitmq',
+  'observability', 'logging', 'metrics', 'tracing', 'monitoring', 'alerting',
+  'testing', 'unit', 'integration', 'e2e', 'mock', 'stub', 'coverage',
+  'refactor', 'migrate', 'upgrade', 'deprecate', 'legacy', 'modernize',
+  'performance', 'optimization', 'bottleneck', 'latency', 'throughput',
+  'typescript', 'javascript', 'python', 'go', 'rust', 'java', 'sql', 'nosql',
+  'react', 'vue', 'angular', 'nextjs', 'node', 'express', 'fastapi',
+  'solid', 'dry', 'kiss', 'yagni', 'clean', 'hexagonal', 'layered', 'ddd'
+]);
+
+/**
+ * Calculate weighted agreement score between two outputs
+ * Combines: word overlap, sentence overlap, keyword matching, structure similarity
  */
 function calculateAgreement(output1, output2) {
-  const words1 = new Set(output1.toLowerCase().split(/\s+/).filter(w => w.length > 4));
-  const words2 = new Set(output2.toLowerCase().split(/\s+/).filter(w => w.length > 4));
+  const norm1 = output1.toLowerCase();
+  const norm2 = output2.toLowerCase();
 
-  const intersection = [...words1].filter(w => words2.has(w));
-  const union = new Set([...words1, ...words2]);
+  // 1. Word overlap (Jaccard) with length filter
+  const words1 = new Set(norm1.split(/\s+/).filter(w => w.length > 3));
+  const words2 = new Set(norm2.split(/\s+/).filter(w => w.length > 3));
+  const wordIntersection = [...words1].filter(w => words2.has(w));
+  const wordUnion = new Set([...words1, ...words2]);
+  const wordScore = wordUnion.size > 0 ? (wordIntersection.length / wordUnion.size) : 0;
 
-  return union.size > 0 ? (intersection.length / union.size) * 100 : 0;
+  // 2. Technical keyword overlap (weighted 2x)
+  const tech1 = [...words1].filter(w => TECH_KEYWORDS.has(w));
+  const tech2 = [...words2].filter(w => TECH_KEYWORDS.has(w));
+  const techIntersection = tech1.filter(w => tech2.includes(w));
+  const techUnion = new Set([...tech1, ...tech2]);
+  const techScore = techUnion.size > 0 ? (techIntersection.length / techUnion.size) : 0;
+
+  // 3. Sentence overlap (first 3 sentences)
+  const sentences1 = norm1.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
+  const sentences2 = norm2.split(/[.!?]+/).map(s => s.trim()).filter(s => s.length > 10);
+  const sentOverlap = sentences1.filter(s1 =>
+    sentences2.some(s2 => {
+      const common = s1.split(/\s+/).filter(w => s2.includes(w) && w.length > 4);
+      return common.length >= 3;
+    })
+  ).length;
+  const sentUnion = new Set([...sentences1, ...sentences2]).size;
+  const sentScore = sentUnion > 0 ? sentOverlap / Math.min(sentences1.length, sentences2.length, 3) : 0;
+
+  // 4. Structure similarity (list items, code blocks, headers)
+  const structure1 = {
+    bullets: (norm1.match(/^\s*[-*]\s+/gm) || []).length,
+    numbers: (norm1.match(/^\s*\d+\.\s+/gm) || []).length,
+    codeBlocks: (norm1.match(/```/g) || []).length / 2,
+    headers: (norm1.match(/^#{1,3}\s+/gm) || []).length
+  };
+  const structure2 = {
+    bullets: (norm2.match(/^\s*[-*]\s+/gm) || []).length,
+    numbers: (norm2.match(/^\s*\d+\.\s+/gm) || []).length,
+    codeBlocks: (norm2.match(/```/g) || []).length / 2,
+    headers: (norm2.match(/^#{1,3}\s+/gm) || []).length
+  };
+  const structDiff = Math.abs(structure1.bullets - structure2.bullets) +
+    Math.abs(structure1.numbers - structure2.numbers) +
+    Math.abs(structure1.codeBlocks - structure2.codeBlocks) +
+    Math.abs(structure1.headers - structure2.headers);
+  const structMax = Math.max(
+    structure1.bullets + structure1.numbers + structure1.codeBlocks + structure1.headers,
+    structure2.bullets + structure2.numbers + structure2.codeBlocks + structure2.headers,
+    1
+  );
+  const structScore = 1 - (structDiff / (structMax * 2));
+
+  // Combined score: 40% word + 30% tech + 20% sentence + 10% structure
+  const combined = (wordScore * 0.40 + techScore * 0.30 + sentScore * 0.20 + structScore * 0.10) * 100;
+  return Math.min(combined, 100);
 }
 
 /**

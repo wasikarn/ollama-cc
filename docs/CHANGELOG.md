@@ -1,5 +1,27 @@
 # Changelog
 
+## v0.2.7 — Wiki-Central Patterns (Retry, Circuit Breaker, Consensus)
+
+### Added
+
+- **Circuit Breaker** (`scripts/lib/circuit-breaker.mjs`) — state-machine proxy (CLOSED → OPEN → HALF_OPEN)
+  - Prevents cascading failures when Ollama is down/overloaded
+  - Global breaker registry (`getBreaker()`, `getAllBreakerStatuses()`)
+  - 8 tests covering trip, timeout, half-open, manual override
+- **Retry Pattern v2** — `withRetry()` in `utils.mjs` upgraded per wiki-central
+  - Error classification: quota → 4x delay, connection → 2x, timeout → 1.5x
+  - Exponential backoff with jitter (up to 30%)
+  - Proper logging: WARN for retries, ERROR for final failure
+  - Avoids "DDoS yourself" from aggressive retry on capacity
+
+### Changed
+
+- **Panel consensus scoring** (`calculateAgreement`) — replaced naive word overlap with weighted composite:
+  - 40% word Jaccard overlap (length > 3)
+  - 30% technical keyword overlap (80+ weighted terms: microservices, kubernetes, async, etc.)
+  - 20% sentence-level overlap (first 3 sentences, 3+ common words)
+  - 10% structure similarity (bullets, numbered lists, code blocks, headers)
+
 ## v0.2.6 — Health Check Command
 
 ### Added
